@@ -46,8 +46,8 @@ public class DataWriterFactory {
 
             return ClassLoaderManager.newInstance(urlList, cl -> {
                 Class<?> clazz = cl.loadClass(pluginClassName);
-                Constructor constructor = clazz.getConstructor(DataTransferConfig.class);
-                return (BaseDataWriter)constructor.newInstance(config);
+                Constructor constructor = clazz.getConstructor(DataTransferConfig.class, WriterConfig.class);
+                return (BaseDataWriter)constructor.newInstance(config, writerConfig);
             });
         } catch (Exception e) {
             throw new RuntimeException(e);
