@@ -177,15 +177,19 @@ public abstract class BaseRichInputFormat extends org.apache.flink.api.common.io
         List<Map<String,Object>> contentList = (List<Map<String,Object>>) map.get(KEY_CONTENT);
         for(Map<String,Object> contentMap : contentList) {
             //隐藏密码信息
-            Map<String, Object> readerConfig = (Map<String, Object>)contentMap.get(KEY_READER);
-            Map<String, Object> readerParameter = (Map<String, Object>)readerConfig.get(KEY_PARAMETER);
-            if(readerParameter.containsKey(KEY_PASSWORD)){
-                readerParameter.put(KEY_PASSWORD, KEY_CONFUSED_PASSWORD);
+            List<Map<String, Object>> readerConfigList = (List<Map<String, Object>>)contentMap.get(KEY_READER);
+            for (Map<String, Object> readerConfig : readerConfigList) {
+                Map<String, Object> readerParameter = (Map<String, Object>)readerConfig.get(KEY_PARAMETER);
+                if(readerParameter.containsKey(KEY_PASSWORD)){
+                    readerParameter.put(KEY_PASSWORD, KEY_CONFUSED_PASSWORD);
+                }
             }
-            Map<String, Object> writerConfig = (Map<String, Object>)contentMap.get(KEY_WRITER);
-            Map<String, Object> writerParameter = (Map<String, Object>)writerConfig.get(KEY_PARAMETER);
-            if(writerParameter.containsKey(KEY_PASSWORD)){
-                writerParameter.put(KEY_PASSWORD, KEY_CONFUSED_PASSWORD);
+            List<Map<String, Object>> writerConfigList = (List<Map<String, Object>>)contentMap.get(KEY_WRITER);
+            for (Map<String, Object> writerConfig : writerConfigList) {
+                Map<String, Object> writerParameter = (Map<String, Object>)writerConfig.get(KEY_PARAMETER);
+                if(writerParameter.containsKey(KEY_PASSWORD)){
+                    writerParameter.put(KEY_PASSWORD, KEY_CONFUSED_PASSWORD);
+                }
             }
         }
         LOG.info("configInfo : \n{}", GsonUtil.GSON.toJson(map));

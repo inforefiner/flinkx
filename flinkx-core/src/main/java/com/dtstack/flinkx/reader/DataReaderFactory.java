@@ -47,8 +47,8 @@ public class DataReaderFactory {
 
             return ClassLoaderManager.newInstance(urlList, cl -> {
                 Class<?> clazz = cl.loadClass(pluginClassName);
-                Constructor constructor = clazz.getConstructor(DataTransferConfig.class, StreamExecutionEnvironment.class);
-                return (BaseDataReader)constructor.newInstance(config, env);
+                Constructor constructor = clazz.getConstructor(DataTransferConfig.class, ReaderConfig.class, StreamExecutionEnvironment.class);
+                return (BaseDataReader)constructor.newInstance(config, readerConfig, env);
             });
         } catch (Exception e) {
             throw new RuntimeException(e);
