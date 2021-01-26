@@ -133,10 +133,14 @@ public class Main {
 
         Map<String, DataStream<Row>> readerDataStreams = new HashMap<>();
 
-        List<ReaderConfig> readerConfigs = config.getJob().getContent().get(0).getReader();
+        List<ContentConfig> content = config.getJob().getContent();
+        ContentConfig firstContent = content.get(0);
+        List<ReaderConfig> readerConfigs = firstContent.getReader();
         for (ReaderConfig readerConfig : readerConfigs) {
             BaseDataReader dataReader = DataReaderFactory.getDataReader(config, readerConfig, env);
             DataStream<Row> dataStream = dataReader.readData();
+            RowTypeInfo rowTypeInfo = (RowTypeInfo) dataStream.getType();
+            String[] fieldNames = rowTypeInfo.getFieldNames();
             if (speedConfig.getReaderChannel() > 0) {
                 dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
             }
@@ -145,65 +149,20 @@ public class Main {
                 dataStream = dataStream.rebalance();
             }
             //生成临时表
-            tableContext.registerDataStream(readerConfig.getStreamName(), dataStream);
+            tableContext.registerDataStream(readerConfig.getStreamName(), dataStream, StringUtils.join(fieldNames, ","));
 
             readerDataStreams.put(readerConfig.getStreamName(), dataStream);
         }
 
-//        BaseDataReader dataReader = DataReaderFactory.getDataReader(config, env);
-//        DataStream<Row> dataStream = dataReader.readData();
-//        if (speedConfig.getReaderChannel() > 0) {
-//            dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
-//        }
-//
-//        if (speedConfig.isRebalance()) {
-//            dataStream = dataStream.rebalance();
-//        }
-
-        /*数据处理*/
-
-        String tableName = "tmpTable";
-        List<String> fields = new ArrayList<>();
-        //获取字段处理方法
-        List<Map<String, String>> mapList = (List<Map<String, String>>) config.getJob().getContent().get(0).getWriter().getParameter().getVal("encrypt");
-
-        if (mapList == null || mapList.size() == 0) {
-            return;
-        }
-
-        //构造sql
-        StringBuilder sb = new StringBuilder("SELECT ");
-        for (Map<String, String> map : mapList) {
-            fields.add(map.get("name"));
-            if (StringUtils.isNotBlank(map.get("type"))) {
-                if (StringUtils.isNotBlank(map.get("key"))) {
-                    sb.append(map.get("type") + "(`" + map.get("name") + "`, '" + map.get("key") + "')");
-                } else {
-                    sb.append(map.get("type") + "(`" + map.get("name") + "`)");
-                }
-            } else {
-                sb.append("`" + map.get("name") + "`");
-            }
-            sb.append(" AS `" + map.get("name") + "`,");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append(" FROM ").append(tableName);
-
-        LOG.info("sql is:" + sb.toString());
-
-        List<Map<String, String>> columns = config.getJob().getContent().get(0).getWriter().getParameter().getColumn();
-        RowTypeInfo rowTypeInfo = ConvertUtil.buildRowTypeInfo(columns);
-
-        SingleOutputStreamOperator<Row> streamOperator = dataStream.map((MapFunction<Row, Row>) row -> row).returns(rowTypeInfo);
-
-        //生成临时表
-        tableContext.registerDataStream(tableName, streamOperator, StringUtils.join(fields, ","));
+        TransformationConfig transformationConfig = firstContent.getTransformationConfig();
+        String sql = transformationConfig.getSql();
+        LOG.info("transform sql is:" + sql);
 
         //数据处理
-        DataStream<Row> dataStream1 = tableContext.toAppendStream(tableContext.sqlQuery(sb.toString()), Row.class);
+        DataStream<Row> dataStream1 = tableContext.toAppendStream(tableContext.sqlQuery(sql), Row.class);
 
         //多writer构造
-        List<WriterConfig> writerConfigs = config.getJob().getContent().get(0).getWriter();
+        List<WriterConfig> writerConfigs = firstContent.getWriter();
         for (WriterConfig writerConfig : writerConfigs) {
             BaseDataWriter dataWriter = DataWriterFactory.getDataWriter(config, writerConfig);
 
@@ -260,15 +219,15 @@ public class Main {
             return restartConfig;
         }
 
-        Object restartConfigObj = config.getJob().getContent().get(0).getReader().getParameter().getVal(RestartConfig.KEY_STRATEGY);
-        if (null != restartConfigObj) {
-            return new RestartConfig((Map<String, Object>) restartConfigObj);
-        }
+//        Object restartConfigObj = config.getJob().getContent().get(0).getReader().getParameter().getVal(RestartConfig.KEY_STRATEGY);
+//        if (null != restartConfigObj) {
+//            return new RestartConfig((Map<String, Object>) restartConfigObj);
+//        }
 
-        restartConfigObj = config.getJob().getContent().get(0).getWriter().getParameter().getVal(RestartConfig.KEY_STRATEGY);
-        if (null != restartConfigObj) {
-            return new RestartConfig((Map<String, Object>) restartConfigObj);
-        }
+//        restartConfigObj = config.getJob().getContent().get(0).getWriter().getParameter().getVal(RestartConfig.KEY_STRATEGY);
+//        if (null != restartConfigObj) {
+//            return new RestartConfig((Map<String, Object>) restartConfigObj);
+//        }
 
         return RestartConfig.defaultConfig();
     }

@@ -26,10 +26,7 @@ import com.dtstack.flinkx.carbondata.reader.CarbondataReader;
 import com.dtstack.flinkx.carbondata.writer.CarbondataWriter;
 import com.dtstack.flinkx.clickhouse.reader.ClickhouseReader;
 import com.dtstack.flinkx.clickhouse.writer.ClickhouseWriter;
-import com.dtstack.flinkx.config.DataTransferConfig;
-import com.dtstack.flinkx.config.ReaderConfig;
-import com.dtstack.flinkx.config.SpeedConfig;
-import com.dtstack.flinkx.config.WriterConfig;
+import com.dtstack.flinkx.config.*;
 import com.dtstack.flinkx.constants.ConfigConstant;
 import com.dtstack.flinkx.db2.reader.Db2Reader;
 import com.dtstack.flinkx.db2.writer.Db2Writer;
@@ -95,6 +92,7 @@ import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.fs.Path;
@@ -148,7 +146,7 @@ public class LocalTest {
 //        conf.setString("metrics.reporter.promgateway.deleteOnShutdown","true");
 
 
-        String jobPath = "D:\\workspace\\flinkx\\bin\\flinkx-test.json";
+        String jobPath = "flinkx-test/src/main/resources/test_hdfs_read.json";
         String savePointPath = "";
         JobExecutionResult result = LocalTest.runJob(new File(jobPath), confProperties, savePointPath);
 
@@ -179,109 +177,58 @@ public class LocalTest {
             ));
         }
 
-
-
         //注册udf
         StreamTableEnvironment tableContext = StreamTableEnvironment.create(env);
         UserDefinedFunctionRegistry udfRegistry = new UserDefinedFunctionRegistry(tableContext);
         udfRegistry.registerInternalUDFs();
 
-        List<ReaderConfig> readerConfigs = config.getJob().getContent().get(0).getReader();
+        List<ContentConfig> content = config.getJob().getContent();
+        ContentConfig firstContent = content.get(0);
+        List<ReaderConfig> readerConfigs = firstContent.getReader();
         for (ReaderConfig readerConfig : readerConfigs) {
             BaseDataReader reader = buildDataReader(config, readerConfig, env);
+            List column = readerConfig.getParameter().getColumn();
+            RowTypeInfo rowTypeInfo = ConvertUtil.buildRowTypeInfo(column);
             DataStream<Row> dataStream = reader.readData();
+            String[] fieldNames = rowTypeInfo.getFieldNames();
             SpeedConfig speedConfig = config.getJob().getSetting().getSpeed();
             if (speedConfig.getReaderChannel() > 0) {
                 dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
             }
 
-            dataStream = new DataStream<>(dataStream.getExecutionEnvironment(),
-                    new PartitionTransformation<>(dataStream.getTransformation(),
-                            new CustomPartitioner<>()));
+            /*
+            * 处理后得到RowTypeInfo才能注册成Table
+            * */
+            SingleOutputStreamOperator<Row> rowDataStream = dataStream.map(row -> row).returns(rowTypeInfo);
 
-            tableContext.registerDataStream(readerConfig.getStreamName(), dataStream);
-        }
-//        BaseDataReader reader = buildDataReader(config, env);
-//        DataStream<Row> dataStream = reader.readData();
-//        SpeedConfig speedConfig = config.getJob().getSetting().getSpeed();
-//        if (speedConfig.getReaderChannel() > 0) {
-//            dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
-//        }
-//
-//        dataStream = new DataStream<>(dataStream.getExecutionEnvironment(),
-//                new PartitionTransformation<>(dataStream.getTransformation(),
-//                        new CustomPartitioner<>()));
-
-        /*数据处理*/
-
-        String tableName = "tmpTable";
-        List<String> fields = new ArrayList<>();
-        //获取字段处理方法
-        List<Map<String, String>> mapList = (List<Map<String, String>>) config.getJob().getContent().get(0).getWriter().getParameter().getVal("encrypt");
-
-        if (mapList == null || mapList.size() == 0) {
-            return null;
+            tableContext.registerDataStream(readerConfig.getStreamName(), rowDataStream,
+                    org.apache.commons.lang3.StringUtils.join(fieldNames, ","));
         }
 
-        //构造sql
-        StringBuilder sb = new StringBuilder("SELECT ");
-        for (Map<String, String> map : mapList) {
-            fields.add(map.get("name"));
-            if (org.apache.commons.lang3.StringUtils.isNotBlank(map.get("type"))) {
-                sb.append(map.get("type") + "(`" + map.get("name") + "`)");
-            } else {
-                sb.append("`" + map.get("name") + "`");
-            }
-            sb.append(" AS `" + map.get("name") + "`,");
-        }
-        sb.deleteCharAt(sb.length() - 1);
-        sb.append(" FROM ").append(tableName);
+        TransformationConfig transformation = firstContent.getTransformationConfig();
+        String sql = transformation.getSql();
+        LOG.info("processing sql: {}", sql);
 
-        LOG.info("sql is:" + sb.toString());
 
-        List<Map<String, String>> columns = config.getJob().getContent().get(0).getWriter().getParameter().getColumn();
-
-        LOG.info("columns size is :" + columns.size());
-
-        RowTypeInfo rowTypeInfo = ConvertUtil.buildRowTypeInfo(columns);
-
-        LOG.info("rowTypeInfo: " + rowTypeInfo);
-
-        SingleOutputStreamOperator<Row> streamOperator = dataStream.map((MapFunction<Row, Row>) row -> row).returns(rowTypeInfo);
-
-        LOG.info("fields size is :" + fields.size());
-
-        //生成临时表
-        tableContext.registerDataStream(tableName, streamOperator, org.apache.commons.lang3.StringUtils.join(fields, ","));
-
-        LOG.info("typeInfo size is :" + streamOperator.getType().getArity());
-
-        LOG.info("streamOperator type:" + streamOperator.getType());
-
-        Table table = tableContext.sqlQuery(sb.toString());
-
+        Table table = tableContext.sqlQuery(sql);
         System.out.println("==================");
-
         table.printSchema();
-
         System.out.println("==================");
 
         //数据处理
         DataStream<Row> dataStream1 = tableContext.toAppendStream(table, Row.class);
 
-
-        List<WriterConfig> writerConfigs = config.getJob().getContent().get(0).getWriter();
-
+        //多writer构造
+        List<WriterConfig> writerConfigs = firstContent.getWriter();
         for (WriterConfig writerConfig : writerConfigs) {
-            BaseDataWriter dataWriter = buildDataWriter(config, writerConfig);
-            DataStreamSink<?> dataStreamSink = dataWriter.writeData(dataStream1);
-        }
+            BaseDataWriter dataWriter = DataWriterFactory.getDataWriter(config, writerConfig);
 
-//        BaseDataWriter dataWriter = buildDataWriter(config);
-//        DataStreamSink<?> dataStreamSink = dataWriter.writeData(dataStream1);
-//        if (speedConfig.getWriterChannel() > 0) {
-//            dataStreamSink.setParallelism(speedConfig.getWriterChannel());
-//        }
+            SpeedConfig speedConfig = config.getJob().getSetting().getSpeed();
+            DataStreamSink<?> dataStreamSink = dataWriter.writeData(dataStream1);
+            if (speedConfig.getWriterChannel() > 0) {
+                dataStreamSink.setParallelism(speedConfig.getWriterChannel());
+            }
+        }
 
         if(StringUtils.isNotEmpty(savepointPath)){
             env.setSettings(SavepointRestoreSettings.forPath(savepointPath));
@@ -341,44 +288,6 @@ public class LocalTest {
         }
 
         return reader;
-    }
-
-    private static BaseDataWriter buildDataWriter(DataTransferConfig config, WriterConfig writerConfig){
-        String writerName = writerConfig.getName();
-        BaseDataWriter writer;
-        switch (writerName){
-            case PluginNameConstants.STREAM_WRITER : writer = new StreamWriter(config, writerConfig); break;
-            case PluginNameConstants.CARBONDATA_WRITER : writer = new CarbondataWriter(config, writerConfig); break;
-            case PluginNameConstants.MYSQL_WRITER : writer = new MysqlWriter(config, writerConfig); break;
-            case PluginNameConstants.SQLSERVER_WRITER : writer = new SqlserverWriter(config, writerConfig); break;
-            case PluginNameConstants.ORACLE_WRITER : writer = new OracleWriter(config, writerConfig); break;
-            case PluginNameConstants.POSTGRESQL_WRITER : writer = new PostgresqlWriter(config, writerConfig); break;
-            case PluginNameConstants.DB2_WRITER : writer = new Db2Writer(config, writerConfig); break;
-            case PluginNameConstants.GBASE_WRITER : writer = new GbaseWriter(config, writerConfig); break;
-            case PluginNameConstants.ES_WRITER : writer = new EsWriter(config, writerConfig); break;
-            case PluginNameConstants.FTP_WRITER : writer = new FtpWriter(config, writerConfig); break;
-            case PluginNameConstants.HBASE_WRITER : writer = new HbaseWriter(config, writerConfig); break;
-            case PluginNameConstants.HDFS_WRITER : writer = new HdfsWriter(config, writerConfig); break;
-            case PluginNameConstants.MONGODB_WRITER : writer = new MongodbWriter(config, writerConfig); break;
-            case PluginNameConstants.ODPS_WRITER : writer = new OdpsWriter(config, writerConfig); break;
-            case PluginNameConstants.REDIS_WRITER : writer = new RedisWriter(config, writerConfig); break;
-            case PluginNameConstants.HIVE_WRITER : writer = new HiveWriter(config, writerConfig); break;
-            case PluginNameConstants.KAFKA09_WRITER : writer = new Kafka09Writer(config, writerConfig); break;
-            case PluginNameConstants.KAFKA10_WRITER : writer = new Kafka10Writer(config, writerConfig); break;
-            case PluginNameConstants.KAFKA11_WRITER : writer = new Kafka11Writer(config, writerConfig); break;
-            case PluginNameConstants.KUDU_WRITER : writer = new KuduWriter(config, writerConfig); break;
-            case PluginNameConstants.CLICKHOUSE_WRITER : writer = new ClickhouseWriter(config, writerConfig); break;
-            case PluginNameConstants.POLARDB_WRITER : writer = new PolardbWriter(config, writerConfig); break;
-            case PluginNameConstants.KAFKA_WRITER : writer = new KafkaWriter(config, writerConfig); break;
-            case PluginNameConstants.PHOENIX_WRITER : writer = new PhoenixWriter(config, writerConfig); break;
-            case PluginNameConstants.EMQX_WRITER : writer = new EmqxWriter(config, writerConfig); break;
-            case PluginNameConstants.RESTAPI_WRITER : writer = new RestapiWriter(config, writerConfig);break;
-            case PluginNameConstants.DM_WRITER : writer = new DmWriter(config, writerConfig); break;
-            case PluginNameConstants.GREENPLUM_WRITER : writer = new GreenplumWriter(config, writerConfig); break;
-            default:throw new IllegalArgumentException("Can not find writer by name:" + writerName);
-        }
-
-        return writer;
     }
 
     private static void openCheckpointConf(StreamExecutionEnvironment env, Properties properties){

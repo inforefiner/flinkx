@@ -32,15 +32,18 @@ public class ContentConfig extends AbstractConfig {
 
     public final static String KEY_READER_CONFIG = "reader";
     public final static String KEY_WRITER_CONFIG = "writer";
+    public final static String KEY_TRANSFORMATION_CONFIG = "transformation";
 
     List<ReaderConfig> reader = new ArrayList<>();
     List<WriterConfig> writer = new ArrayList<>();
+    TransformationConfig transformationConfig;
 
     public ContentConfig(Map<String, Object> map) {
         super(map);
         if(map != null) {
             List<Map<String,Object>> readerList = (List<Map<String, Object>>) map.get(KEY_READER_CONFIG);
             List<Map<String,Object>> writerList = (List<Map<String, Object>>) map.get(KEY_WRITER_CONFIG);
+            transformationConfig = new TransformationConfig((Map<String, Object>) map.get(KEY_TRANSFORMATION_CONFIG));
             for(Map<String,Object> readerMap : readerList) {
                 reader.add(new ReaderConfig(readerMap));
             }
@@ -68,4 +71,11 @@ public class ContentConfig extends AbstractConfig {
         this.writer = writer;
     }
 
+    public TransformationConfig getTransformationConfig() {
+        return transformationConfig;
+    }
+
+    public void setTransformationConfig(TransformationConfig transformationConfig) {
+        this.transformationConfig = transformationConfig;
+    }
 }
