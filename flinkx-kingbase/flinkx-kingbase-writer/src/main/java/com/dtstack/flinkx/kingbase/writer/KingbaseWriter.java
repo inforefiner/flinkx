@@ -19,6 +19,7 @@
 package com.dtstack.flinkx.kingbase.writer;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.WriterConfig;
 import com.dtstack.flinkx.constants.ConstantValue;
 import com.dtstack.flinkx.kingbase.util.KingBaseDatabaseMeta;
 import com.dtstack.flinkx.kingbase.util.KingBaseTypeConverter;
@@ -44,9 +45,9 @@ public class KingbaseWriter extends JdbcDataWriter {
     /** {@link KingbaseOutputFormat} openInternal方法中需要使用schema进行表名拼接 */
     public String schema;
 
-    public KingbaseWriter(DataTransferConfig config) {
-        super(config);
-        schema = config.getJob().getContent().get(0).getWriter().getParameter().getConnection().get(0).getSchema();
+    public KingbaseWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
+        schema = writerConfig.getParameter().getConnection().get(0).getSchema();
         setDatabaseInterface(new KingBaseDatabaseMeta());
         setTypeConverterInterface(new KingBaseTypeConverter());
     }

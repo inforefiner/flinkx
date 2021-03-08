@@ -19,4 +19,6 @@
         <appender-ref ref="console" />
     </logger>
 
+    <logger name="com.dtstack.flinkx.udf.udtf.RedisLookup" level="DEBUG"/>
+
 </configuration>

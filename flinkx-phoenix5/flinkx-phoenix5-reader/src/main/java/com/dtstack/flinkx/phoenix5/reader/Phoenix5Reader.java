@@ -39,9 +39,8 @@ public class Phoenix5Reader extends JdbcDataReader {
     private int scanCacheSize;
     private int scanBatchSize;
 
-    public Phoenix5Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public Phoenix5Reader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
         readFromHbase = readerConfig.getParameter().getBooleanVal(Phoenix5ConfigKeys.KEY_READ_FROM_HBASE, false);
         scanCacheSize = readerConfig.getParameter().getIntVal(Phoenix5ConfigKeys.KEY_SCAN_CACHE_SIZE, HConstants.DEFAULT_HBASE_CLIENT_SCANNER_CACHING);
         scanBatchSize = readerConfig.getParameter().getIntVal(Phoenix5ConfigKeys.KEY_SCAN_BATCH_SIZE, -1);

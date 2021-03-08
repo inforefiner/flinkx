@@ -19,6 +19,7 @@
 package com.dtstack.flinkx.oracle.reader;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.ReaderConfig;
 import com.dtstack.flinkx.constants.ConstantValue;
 import com.dtstack.flinkx.oracle.OracleDatabaseMeta;
 import com.dtstack.flinkx.oracle.format.OracleInputFormat;
@@ -35,9 +36,9 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class OracleReader extends JdbcDataReader {
 
-    public OracleReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        String schema = config.getJob().getContent().get(0).getReader().getParameter().getConnection().get(0).getSchema();
+    public OracleReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
+        String schema = readerConfig.getParameter().getConnection().get(0).getSchema();
         if(StringUtils.isNotBlank(schema)){
             table = schema + ConstantValue.POINT_SYMBOL + table;
         }

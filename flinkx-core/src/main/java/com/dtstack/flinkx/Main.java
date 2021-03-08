@@ -19,15 +19,14 @@ package com.dtstack.flinkx;
 
 import com.dtstack.flink.api.java.MyLocalStreamEnvironment;
 import com.dtstack.flinkx.classloader.PluginUtil;
-import com.dtstack.flinkx.config.ContentConfig;
-import com.dtstack.flinkx.config.DataTransferConfig;
-import com.dtstack.flinkx.config.RestartConfig;
-import com.dtstack.flinkx.config.SpeedConfig;
-import com.dtstack.flinkx.config.TestConfig;
+import com.dtstack.flinkx.config.*;
 import com.dtstack.flinkx.constants.ConfigConstant;
 import com.dtstack.flinkx.options.OptionParser;
 import com.dtstack.flinkx.reader.BaseDataReader;
 import com.dtstack.flinkx.reader.DataReaderFactory;
+import com.dtstack.flinkx.udf.UserDefinedFunctionRegistry;
+import com.dtstack.flinkx.udf.udtf.RedisLookup;
+import com.dtstack.flinkx.util.ConvertUtil;
 import com.dtstack.flinkx.util.ResultPrintUtil;
 import com.dtstack.flinkx.writer.BaseDataWriter;
 import com.dtstack.flinkx.writer.DataWriterFactory;
@@ -37,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
+import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
@@ -44,13 +44,18 @@ import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.types.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -84,7 +89,7 @@ public class Main {
 
         // 解析jobPath指定的任务配置文件
         DataTransferConfig config = DataTransferConfig.parse(job);
-        speedTest(config);
+//        speedTest(config);
 
         if(StringUtils.isNotEmpty(monitor)) {
             config.setMonitorUrls(monitor);
@@ -110,25 +115,74 @@ public class Main {
         env = openCheckpointConf(env, confProperties);
         configRestartStrategy(env, config);
 
+        //注册udf
+        StreamTableEnvironment tableContext = StreamTableEnvironment.create(env);
+        UserDefinedFunctionRegistry udfRegistry = new UserDefinedFunctionRegistry(tableContext);
+        udfRegistry.registerInternalUDFs();
+
+        Map<String, DataStream<Row>> readerDataStreams = new HashMap<>();
+        List<ContentConfig> content = config.getJob().getContent();
+        ContentConfig firstContent = content.get(0);
+
         SpeedConfig speedConfig = config.getJob().getSetting().getSpeed();
-
-        PluginUtil.registerPluginUrlToCachedFile(config, env);
-
+        PluginUtil.registerPluginUrlToCachedFile(config, firstContent, env);
         env.setParallelism(speedConfig.getChannel());
-        BaseDataReader dataReader = DataReaderFactory.getDataReader(config, env);
-        DataStream<Row> dataStream = dataReader.readData();
-        if(speedConfig.getReaderChannel() > 0){
-            dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
+
+        List<ReaderConfig> readerConfigs = firstContent.getReader();
+        for (ReaderConfig readerConfig : readerConfigs) {
+            BaseDataReader dataReader = DataReaderFactory.getDataReader(config, readerConfig, env);
+            DataStream<Row> dataStream = dataReader.readData();
+            List column = readerConfig.getParameter().getColumn();
+            RowTypeInfo rowTypeInfo = ConvertUtil.buildRowTypeInfo(column);
+            String[] fieldNames = rowTypeInfo.getFieldNames();
+            if (speedConfig.getReaderChannel() > 0) {
+                dataStream = ((DataStreamSource<Row>) dataStream).setParallelism(speedConfig.getReaderChannel());
+            }
+
+            if (speedConfig.isRebalance()) {
+                dataStream = dataStream.rebalance();
+            }
+
+            /*
+             * 处理后得到RowTypeInfo才能注册成Table
+             * */
+            SingleOutputStreamOperator<Row> rowDataStream = dataStream.map(row -> row).returns(rowTypeInfo);
+
+            //生成临时表
+            String tableName = readerConfig.getTableName();
+            String fieldsStr = StringUtils.join(fieldNames, ",");
+            LOG.info("register table {} with files {}", tableName, fieldsStr);
+            tableContext.registerDataStream(tableName, rowDataStream, fieldsStr);
+
+            readerDataStreams.put(tableName, rowDataStream);
         }
 
-        if (speedConfig.isRebalance()) {
-            dataStream = dataStream.rebalance();
+        /* 维度表注册为UDTF */
+        List<DimensionConfig> dimensionList = firstContent.getDimension();
+        for (DimensionConfig dimension : dimensionList) {
+            String dimensionName = dimension.getTableName();
+            TableFunction<Row> tableFunction = buildDimension(config, dimension, env);
+            LOG.info("register dimension table {}", dimensionName);
+            tableContext.registerFunction(dimensionName, tableFunction);
         }
 
-        BaseDataWriter dataWriter = DataWriterFactory.getDataWriter(config);
-        DataStreamSink<?> dataStreamSink = dataWriter.writeData(dataStream);
-        if(speedConfig.getWriterChannel() > 0){
-            dataStreamSink.setParallelism(speedConfig.getWriterChannel());
+        TransformConfig transformConfig = firstContent.getTransformConfig();
+        String sql = transformConfig.getSql();
+        LOG.info("transform sql is:" + sql);
+
+        //数据处理
+        DataStream<Row> dataStream1 = tableContext.toAppendStream(tableContext.sqlQuery(sql), Row.class);
+
+        //多writer构造
+        List<WriterConfig> writerConfigs = firstContent.getWriter();
+        for (WriterConfig writerConfig : writerConfigs) {
+            BaseDataWriter dataWriter = DataWriterFactory.getDataWriter(config, writerConfig);
+
+            //todo 获取sink datastream 输出
+            DataStreamSink<?> dataStreamSink = dataWriter.writeData(dataStream1);
+            if (speedConfig.getWriterChannel() > 0) {
+                dataStreamSink.setParallelism(speedConfig.getWriterChannel());
+            }
         }
 
         if(env instanceof MyLocalStreamEnvironment) {
@@ -165,21 +219,32 @@ public class Main {
         }
     }
 
+    private static TableFunction<Row> buildDimension(DataTransferConfig config, DimensionConfig dimensionConfig, StreamExecutionEnvironment env){
+        String type = dimensionConfig.getType();
+        TableFunction<Row> dimensionFunction;
+        switch (type){
+            case "redis" : dimensionFunction = new RedisLookup(dimensionConfig); break;
+            default:throw new IllegalArgumentException("Can not find dimension reader by type:" + type);
+        }
+
+        return dimensionFunction;
+    }
+
     private static RestartConfig findRestartConfig(DataTransferConfig config) {
         RestartConfig restartConfig = config.getJob().getSetting().getRestartConfig();
         if (null != restartConfig) {
             return restartConfig;
         }
 
-        Object restartConfigObj = config.getJob().getContent().get(0).getReader().getParameter().getVal(RestartConfig.KEY_STRATEGY);
-        if (null != restartConfigObj) {
-            return new RestartConfig((Map<String, Object>)restartConfigObj);
-        }
-
-        restartConfigObj = config.getJob().getContent().get(0).getWriter().getParameter().getVal(RestartConfig.KEY_STRATEGY);
-        if (null != restartConfigObj) {
-            return new RestartConfig((Map<String, Object>)restartConfigObj);
-        }
+//        Object restartConfigObj = config.getJob().getContent().get(0).getReader().getParameter().getVal(RestartConfig.KEY_STRATEGY);
+//        if (null != restartConfigObj) {
+//            return new RestartConfig((Map<String, Object>)restartConfigObj);
+//        }
+//
+//        restartConfigObj = config.getJob().getContent().get(0).getWriter().getParameter().getVal(RestartConfig.KEY_STRATEGY);
+//        if (null != restartConfigObj) {
+//            return new RestartConfig((Map<String, Object>)restartConfigObj);
+//        }
 
         return RestartConfig.defaultConfig();
     }
@@ -188,20 +253,20 @@ public class Main {
         return config.getJob().getSetting().getRestoreConfig().isStream();
     }
 
-    private static void speedTest(DataTransferConfig config) {
-        TestConfig testConfig = config.getJob().getSetting().getTestConfig();
-        if (READER.equalsIgnoreCase(testConfig.getSpeedTest())) {
-            ContentConfig contentConfig = config.getJob().getContent().get(0);
-            contentConfig.getWriter().setName(STREAM_WRITER);
-        } else if (WRITER.equalsIgnoreCase(testConfig.getSpeedTest())){
-            ContentConfig contentConfig = config.getJob().getContent().get(0);
-            contentConfig.getReader().setName(STREAM_READER);
-        }else {
-            return;
-        }
-
-        config.getJob().getSetting().getSpeed().setBytes(-1);
-    }
+//    private static void speedTest(DataTransferConfig config) {
+//        TestConfig testConfig = config.getJob().getSetting().getTestConfig();
+//        if (READER.equalsIgnoreCase(testConfig.getSpeedTest())) {
+//            ContentConfig contentConfig = config.getJob().getContent().get(0);
+//            contentConfig.getWriter().setName(STREAM_WRITER);
+//        } else if (WRITER.equalsIgnoreCase(testConfig.getSpeedTest())){
+//            ContentConfig contentConfig = config.getJob().getContent().get(0);
+//            contentConfig.getReader().setName(STREAM_READER);
+//        }else {
+//            return;
+//        }
+//
+//        config.getJob().getSetting().getSpeed().setBytes(-1);
+//    }
 
     private static Properties parseConf(String confStr) throws Exception{
         if(StringUtils.isEmpty(confStr)){

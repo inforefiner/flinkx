@@ -44,9 +44,8 @@ public class FtpWriter extends BaseDataWriter {
     private List<String> columnType;
     private FtpConfig ftpConfig;
 
-    public FtpWriter(DataTransferConfig config) {
-        super(config);
-        WriterConfig writerConfig = config.getJob().getContent().get(0).getWriter();
+    public FtpWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
 
         try {
             ftpConfig = objectMapper.readValue(objectMapper.writeValueAsString(writerConfig.getParameter().getAll()), FtpConfig.class);

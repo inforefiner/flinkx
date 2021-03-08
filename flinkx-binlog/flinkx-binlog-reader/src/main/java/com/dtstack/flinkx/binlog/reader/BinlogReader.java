@@ -35,9 +35,8 @@ public class BinlogReader extends BaseDataReader {
     private BinlogConfig binlogConfig;
 
     @SuppressWarnings("unchecked")
-    public BinlogReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public BinlogReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
         try {
             binlogConfig = objectMapper.readValue(objectMapper.writeValueAsString(readerConfig.getParameter().getAll()), BinlogConfig.class);

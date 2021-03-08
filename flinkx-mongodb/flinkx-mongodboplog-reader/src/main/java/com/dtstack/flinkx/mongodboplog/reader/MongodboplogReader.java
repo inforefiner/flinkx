@@ -36,10 +36,9 @@ public class MongodboplogReader extends BaseDataReader {
 
     private MongodbConfig mongodbConfig;
 
-    public MongodboplogReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
+    public MongodboplogReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
         try {
             mongodbConfig = objectMapper.readValue(objectMapper.writeValueAsString(readerConfig.getParameter().getAll()), MongodbConfig.class);
         } catch (Exception e) {

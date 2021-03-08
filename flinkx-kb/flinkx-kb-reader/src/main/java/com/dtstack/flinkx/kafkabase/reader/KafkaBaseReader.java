@@ -52,9 +52,8 @@ public class KafkaBaseReader extends BaseDataReader {
     protected List<MetaColumn> metaColumns;
 
     @SuppressWarnings("unchecked")
-    public KafkaBaseReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public KafkaBaseReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
         topic = readerConfig.getParameter().getStringVal(KafkaConfigKeys.KEY_TOPIC);
         groupId = readerConfig.getParameter().getStringVal(KafkaConfigKeys.KEY_GROUP_ID, "default");
         codec = readerConfig.getParameter().getStringVal(KafkaConfigKeys.KEY_CODEC, "text");

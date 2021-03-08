@@ -18,6 +18,7 @@
 package com.dtstack.flinkx.kafka10.reader;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.ReaderConfig;
 import com.dtstack.flinkx.kafka10.format.Kafka10InputFormat;
 import com.dtstack.flinkx.kafkabase.format.KafkaBaseInputFormatBuilder;
 import com.dtstack.flinkx.kafkabase.reader.KafkaBaseReader;
@@ -30,8 +31,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class Kafka10Reader extends KafkaBaseReader {
 
-    public Kafka10Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
+    public Kafka10Reader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
     }
 
     @Override

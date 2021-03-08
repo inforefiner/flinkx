@@ -41,10 +41,9 @@ public class MongodbWriter extends BaseDataWriter {
 
     protected MongodbConfig mongodbConfig;
 
-    public MongodbWriter(DataTransferConfig config) {
-        super(config);
+    public MongodbWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
 
-        WriterConfig writerConfig = config.getJob().getContent().get(0).getWriter();
         columns = MetaColumn.getMetaColumns(writerConfig.getParameter().getColumn());
 
         try {

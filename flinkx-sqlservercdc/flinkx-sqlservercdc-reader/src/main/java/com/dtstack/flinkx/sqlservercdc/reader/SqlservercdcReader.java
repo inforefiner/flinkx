@@ -50,9 +50,8 @@ public class SqlservercdcReader extends BaseDataReader {
     private String lsn;
 
     @SuppressWarnings("unchecked")
-    public SqlservercdcReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public SqlservercdcReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
         username = readerConfig.getParameter().getStringVal(SqlServerCdcConfigKeys.KEY_USER_NAME);
         password = readerConfig.getParameter().getStringVal(SqlServerCdcConfigKeys.KEY_PASSWORD);
         url = readerConfig.getParameter().getStringVal(SqlServerCdcConfigKeys.KEY_URL);

@@ -34,6 +34,7 @@ public class WriterConfig extends AbstractConfig {
 
     public static String KEY_PARAMETER_CONFIG = "parameter";
     public static String KEY_WRITER_NAME = "name";
+    public static final String KEY_TABLE_NAME = "tableName";
 
     ParameterConfig parameter;
 
@@ -56,6 +57,10 @@ public class WriterConfig extends AbstractConfig {
 
     public void setParameter(ParameterConfig parameter) {
         this.parameter = parameter;
+    }
+
+    public String getTableName() {
+        return getParameter().getStringVal(KEY_TABLE_NAME);
     }
 
     public static class ParameterConfig extends AbstractConfig {

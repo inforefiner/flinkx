@@ -18,6 +18,7 @@
 package com.dtstack.flinkx.kafka09.reader;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.ReaderConfig;
 import com.dtstack.flinkx.kafka09.format.Kafka09InputFormat;
 import com.dtstack.flinkx.kafkabase.KafkaConfigKeys;
 import com.dtstack.flinkx.kafkabase.format.KafkaBaseInputFormatBuilder;
@@ -32,8 +33,8 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
  */
 public class Kafka09Reader extends KafkaBaseReader {
 
-    public Kafka09Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
+    public Kafka09Reader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
         //兼容历史脚本
         String id = consumerSettings.get(KafkaConfigKeys.GROUP_ID);
         if(StringUtils.isNotBlank(id)){

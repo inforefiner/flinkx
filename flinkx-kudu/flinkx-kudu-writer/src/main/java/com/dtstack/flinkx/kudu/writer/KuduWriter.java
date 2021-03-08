@@ -60,10 +60,10 @@ public class KuduWriter extends BaseDataWriter {
 
     protected Map<String,Object> hadoopConfig;
 
-    public KuduWriter(DataTransferConfig config) {
-        super(config);
+    public KuduWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
 
-        WriterConfig.ParameterConfig parameterConfig = config.getJob().getContent().get(0).getWriter().getParameter();
+        WriterConfig.ParameterConfig parameterConfig = writerConfig.getParameter();
 
         columns = MetaColumn.getMetaColumns(parameterConfig.getColumn());
         writeMode = parameterConfig.getStringVal("writeMode");

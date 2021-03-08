@@ -20,7 +20,7 @@
 package com.dtstack.flinkx.classloader;
 
 import com.dtstack.flink.api.java.MyLocalStreamEnvironment;
-import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.*;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import java.io.File;
@@ -117,12 +117,23 @@ public class PluginUtil {
         return sb.toString();
     }
 
-    public static void registerPluginUrlToCachedFile(DataTransferConfig config, StreamExecutionEnvironment env) {
-        String readerPluginName = config.getJob().getContent().get(0).getReader().getName();
-        Set<URL> readerUrlList = PluginUtil.getJarFileDirPath(readerPluginName, config.getPluginRoot(), config.getRemotePluginPath());
+    public static void registerPluginUrlToCachedFile(DataTransferConfig config, ContentConfig firstContent,
+                                                     StreamExecutionEnvironment env) {
+        List<ReaderConfig> readerConfigs = firstContent.getReader();
+        Set<URL> readerUrlList = new HashSet<>();
+        for (ReaderConfig readerConfig : readerConfigs) {
+            String readerPluginName = readerConfig.getName();
+            Set<URL> urls = PluginUtil.getJarFileDirPath(readerPluginName, config.getPluginRoot(), config.getRemotePluginPath());
+            readerUrlList.addAll(urls);
+        }
 
-        String writerPluginName = config.getJob().getContent().get(0).getWriter().getName();
-        Set<URL> writerUrlList = PluginUtil.getJarFileDirPath(writerPluginName, config.getPluginRoot(), config.getRemotePluginPath());
+        List<WriterConfig> writerConfigs = firstContent.getWriter();
+        Set<URL> writerUrlList = new HashSet<>();
+        for (WriterConfig writerConfig : writerConfigs) {
+            String writerPluginName = writerConfig.getName();
+            Set<URL> urls = PluginUtil.getJarFileDirPath(writerPluginName, config.getPluginRoot(), config.getRemotePluginPath());
+            writerUrlList.addAll(urls);
+        }
 
         Set<URL> urlSet = new HashSet<>();
 

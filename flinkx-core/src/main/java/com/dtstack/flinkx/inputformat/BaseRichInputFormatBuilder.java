@@ -18,13 +18,12 @@
 
 package com.dtstack.flinkx.inputformat;
 
-import com.dtstack.flinkx.config.DataTransferConfig;
-import com.dtstack.flinkx.config.LogConfig;
-import com.dtstack.flinkx.config.RestoreConfig;
-import com.dtstack.flinkx.config.TestConfig;
+import com.dtstack.flinkx.config.*;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Abstract specification for all the InputFormatBuilder implementation
@@ -37,6 +36,8 @@ public abstract class BaseRichInputFormatBuilder {
     protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
     protected BaseRichInputFormat format;
+
+    protected boolean check = true;
 
     public void setMonitorUrls(String monitorUrls) {
         format.monitorUrls = monitorUrls;
@@ -60,6 +61,11 @@ public abstract class BaseRichInputFormatBuilder {
     public void setDataTransferConfig(DataTransferConfig dataTransferConfig){
         format.setDataTransferConfig(dataTransferConfig);
     }
+
+    public void setCheck(boolean check) {
+        this.check = check;
+    }
+
     /**
      * Check the value of parameters
      */
@@ -67,7 +73,6 @@ public abstract class BaseRichInputFormatBuilder {
 
     public BaseRichInputFormat finish() {
         Preconditions.checkNotNull(format);
-        boolean check = format.getDataTransferConfig().getJob().getContent().get(0).getReader().getParameter().getBooleanVal("check", true);
         if(check){
             checkFormat();
         }

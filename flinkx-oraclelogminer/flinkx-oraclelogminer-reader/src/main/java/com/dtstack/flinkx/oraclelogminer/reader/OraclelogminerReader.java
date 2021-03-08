@@ -37,10 +37,8 @@ public class OraclelogminerReader extends BaseDataReader {
 
     private LogMinerConfig logMinerConfig;
 
-    public OraclelogminerReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public OraclelogminerReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
         try {
             logMinerConfig = objectMapper.readValue(objectMapper.writeValueAsString(readerConfig.getParameter().getAll()), LogMinerConfig.class);

@@ -90,10 +90,9 @@ public class HiveWriter extends BaseDataWriter {
 
     private String schema;
 
-    public HiveWriter(DataTransferConfig config) {
-        super(config);
-        readerName = config.getJob().getContent().get(0).getReader().getName();
-        WriterConfig writerConfig = config.getJob().getContent().get(0).getWriter();
+    public HiveWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
+//        readerName = config.getJob().getContent().get(0).getReader().getName();
         hadoopConfig = (Map<String, Object>) writerConfig.getParameter().getVal(HiveConfigKeys.KEY_HADOOP_CONFIG);
         defaultFs = writerConfig.getParameter().getStringVal(HiveConfigKeys.KEY_DEFAULT_FS);
         if (StringUtils.isBlank(defaultFs) && hadoopConfig.containsKey(HiveConfigKeys.KEY_FS_DEFAULT_FS)){

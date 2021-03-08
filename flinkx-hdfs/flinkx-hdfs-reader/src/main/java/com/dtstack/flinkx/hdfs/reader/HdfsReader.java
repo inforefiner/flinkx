@@ -49,9 +49,8 @@ public class HdfsReader extends BaseDataReader {
     protected Map<String, Object> hadoopConfig;
     protected String filterRegex;
 
-    public HdfsReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public HdfsReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
         defaultFs = readerConfig.getParameter().getStringVal(HdfsConfigKeys.KEY_DEFAULT_FS);
 
         String fileName = readerConfig.getParameter().getStringVal(HdfsConfigKeys.KEY_FILE_NAME);

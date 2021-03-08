@@ -34,6 +34,8 @@ public class ReaderConfig extends AbstractConfig {
 
     public static final String KEY_READER_NAME = "name";
 
+    public static final String KEY_TABLE_NAME = "tableName";
+
     private ParameterConfig parameter;
 
     public ReaderConfig(Map<String, Object> map) {
@@ -47,6 +49,10 @@ public class ReaderConfig extends AbstractConfig {
 
     public void setName(String name) {
         setStringVal(KEY_READER_NAME, name);
+    }
+
+    public String getTableName() {
+        return getParameter().getStringVal(KEY_TABLE_NAME);
     }
 
     public ParameterConfig getParameter() {

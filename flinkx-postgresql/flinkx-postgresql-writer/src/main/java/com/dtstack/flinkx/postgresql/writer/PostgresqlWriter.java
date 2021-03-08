@@ -19,6 +19,7 @@
 package com.dtstack.flinkx.postgresql.writer;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.WriterConfig;
 import com.dtstack.flinkx.constants.ConstantValue;
 import com.dtstack.flinkx.postgresql.PostgresqlDatabaseMeta;
 import com.dtstack.flinkx.postgresql.PostgresqlTypeConverter;
@@ -40,9 +41,9 @@ import org.apache.flink.types.Row;
 public class PostgresqlWriter extends JdbcDataWriter {
 
 
-    public PostgresqlWriter(DataTransferConfig config) {
-        super(config);
-        String schema = config.getJob().getContent().get(0).getWriter().getParameter().getConnection().get(0).getSchema();
+    public PostgresqlWriter(DataTransferConfig config, WriterConfig writerConfig) {
+        super(config, writerConfig);
+        String schema = writerConfig.getParameter().getConnection().get(0).getSchema();
         if (StringUtils.isNotEmpty(schema)){
             table = schema + ConstantValue.POINT_SYMBOL + table;
         }

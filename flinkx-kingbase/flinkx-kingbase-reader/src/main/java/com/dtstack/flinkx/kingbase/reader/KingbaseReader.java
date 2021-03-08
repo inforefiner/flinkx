@@ -19,6 +19,7 @@
 package com.dtstack.flinkx.kingbase.reader;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.ReaderConfig;
 import com.dtstack.flinkx.constants.ConstantValue;
 import com.dtstack.flinkx.kingbase.util.KingBaseDatabaseMeta;
 import com.dtstack.flinkx.kingbase.format.KingbaseInputFormat;
@@ -35,9 +36,9 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 public class KingbaseReader  extends JdbcDataReader {
 
-    public KingbaseReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        String schema = config.getJob().getContent().get(0).getReader().getParameter().getConnection().get(0).getSchema();
+    public KingbaseReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
+        String schema = readerConfig.getParameter().getConnection().get(0).getSchema();
         table = schema + ConstantValue.POINT_SYMBOL + table;
         setDatabaseInterface(new KingBaseDatabaseMeta());
     }

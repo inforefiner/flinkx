@@ -42,9 +42,8 @@ public class FtpReader extends BaseDataReader {
     private List<MetaColumn> metaColumns;
     private FtpConfig ftpConfig;
 
-    public FtpReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
+    public FtpReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
         try {
             ftpConfig = objectMapper.readValue(objectMapper.writeValueAsString(readerConfig.getParameter().getAll()), FtpConfig.class);

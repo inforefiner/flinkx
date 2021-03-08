@@ -59,10 +59,9 @@ public class KuduReader extends BaseDataReader {
 
     protected Map<String,Object> hadoopConfig;
 
-    public KuduReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
+    public KuduReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
         ReaderConfig.ParameterConfig parameterConfig = readerConfig.getParameter();
 
         columns = MetaColumn.getMetaColumns(parameterConfig.getColumn());

@@ -1,0 +1,152 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": [
+          {
+            "name": "mysqlreader",
+            "parameter": {
+              "username": "merce",
+              "password": "merce",
+              "connection": [
+                {
+                  "jdbcUrl": [
+                    "jdbc:mysql://192.168.1.82:3306/test"
+                  ],
+                  "table": [
+                    "user_click_cache"
+                  ]
+                }
+              ],
+              "where": "",
+              "queryTimeOut": 0,
+              "increColumn": "",
+              "splitPk": "",
+              "fetchSize": 0,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "username",
+                  "type": "string"
+                },
+                {
+                  "name": "url",
+                  "type": "string"
+                },
+                {
+                  "name": "clickTime",
+                  "type": "timestamp"
+                }
+              ],
+              "tableName": "mysql_source"
+            }
+          }
+        ],
+        "dimension": [
+          {
+            "name": "shiy-url-click-cache-redis",
+            "type": "redis",
+            "parameter": {
+              "url": "info4:6379",
+              "table": "flink-redis-sink-1",
+              "keyColumn": "userId",
+              "password": "",
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "username",
+                  "type": "string"
+                },
+                {
+                  "name": "url",
+                  "type": "string"
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string"
+                }
+              ],
+              "tableName": "REDIS_LOOKUP"
+            }
+          }
+        ],
+        "writer": [
+          {
+            "name": "streamwriter",
+            "parameter": {
+              "print": true,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "username",
+                  "type": "string"
+                },
+                {
+                  "name": "url",
+                  "type": "string"
+                },
+                {
+                  "name": "col1",
+                  "type": "string"
+                },
+                {
+                  "name": "col2",
+                  "type": "string"
+                },
+                {
+                  "name": "t2_userId",
+                  "type": "string"
+                },
+                {
+                  "name": "t2_username",
+                  "type": "string"
+                },
+                {
+                  "name": "t2_url",
+                  "type": "string"
+                },
+                {
+                  "name": "t2_clickTime",
+                  "type": "string"
+                }
+              ],
+              "tableName": "sink_test_0224"
+            }
+          }
+        ],
+        "transform": {
+          "sql": "select t1.userId,t1.username,t1.url,t1.username ||'#' || t1.url as col1,SUBSTRING(t1.username,3) as col2,t2.userId as t2_userId,t2.username as t2_username,t2.url as t2_url,t2.clickTime as t2_clickTime from mysql_source t1,LATERAL TABLE(REDIS_LOOKUP(CAST(userId as varchar))) as t2(userId,username,url,clickTime)"
+        }
+      }
+    ],
+    "setting": {
+      "restore": {
+        "isRestore": false,
+        "isStream": false,
+        "maxRowNumForCheckpoint": 1
+      },
+      "log": {
+        "isLogger": false,
+        "level": "info",
+        "path": "/tmp/dtstack/flinkx/"
+      },
+      "speed": {
+        "channel": 1,
+        "bytes": 9223372036854775807
+      },
+      "errorLimit": {
+        "record": 0,
+        "percentage": 0.0
+      }
+    }
+  }
+}

@@ -21,6 +21,7 @@ package com.dtstack.flinkx.writer;
 import com.dtstack.flinkx.classloader.ClassLoaderManager;
 import com.dtstack.flinkx.classloader.PluginUtil;
 import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.config.WriterConfig;
 
 import java.lang.reflect.Constructor;
 import java.net.URL;
@@ -36,16 +37,16 @@ public class DataWriterFactory {
 
     private DataWriterFactory() {}
 
-    public static BaseDataWriter getDataWriter(DataTransferConfig config) {
+    public static BaseDataWriter getDataWriter(DataTransferConfig config, WriterConfig writerConfig) {
         try {
-            String pluginName = config.getJob().getContent().get(0).getWriter().getName();
+            String pluginName = writerConfig.getName();
             String pluginClassName = PluginUtil.getPluginClassName(pluginName);
             Set<URL> urlList = PluginUtil.getJarFileDirPath(pluginName, config.getPluginRoot(), null);
 
             return ClassLoaderManager.newInstance(urlList, cl -> {
                 Class<?> clazz = cl.loadClass(pluginClassName);
-                Constructor constructor = clazz.getConstructor(DataTransferConfig.class);
-                return (BaseDataWriter)constructor.newInstance(config);
+                Constructor constructor = clazz.getConstructor(DataTransferConfig.class, WriterConfig.class);
+                return (BaseDataWriter)constructor.newInstance(config, writerConfig);
             });
         } catch (Exception e) {
             throw new RuntimeException(e);

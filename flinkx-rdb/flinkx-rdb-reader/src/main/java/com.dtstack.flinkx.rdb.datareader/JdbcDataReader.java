@@ -65,10 +65,9 @@ public class JdbcDataReader extends BaseDataReader {
     protected TypeConverterInterface typeConverter;
     protected List<MetaColumn> metaColumns;
 
-    public JdbcDataReader(DataTransferConfig config, StreamExecutionEnvironment env) {
-        super(config, env);
+    public JdbcDataReader(DataTransferConfig config, ReaderConfig readerConfig, StreamExecutionEnvironment env) {
+        super(config, readerConfig, env);
 
-        ReaderConfig readerConfig = config.getJob().getContent().get(0).getReader();
         dbUrl = readerConfig.getParameter().getConnection().get(0).getJdbcUrl().get(0);
         username = readerConfig.getParameter().getStringVal(JdbcConfigKeys.KEY_USER_NAME);
         password = readerConfig.getParameter().getStringVal(JdbcConfigKeys.KEY_PASSWORD);
