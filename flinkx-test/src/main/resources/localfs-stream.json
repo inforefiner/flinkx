@@ -1,0 +1,139 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": [
+          {
+            "name": "localfsreader",
+            "parameter": {
+              "path": "/tmp/data/flink/collector/",
+              "encoder": "UTF-8",
+              "tableName": "localfs_source",
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "username",
+                  "type": "string"
+                },
+                {
+                  "name": "url",
+                  "type": "string"
+                },
+                {
+                  "name": "clickTime",
+                  "type": "timestamp"
+                }
+              ]
+            }
+          }
+        ],
+        "dimension": [
+          {
+            "name": "shiy-url-click-cache-redis",
+            "type": "REDIS",
+            "parameter": {
+              "url": "info4:6379",
+              "table": "flink-redis-sink-1",
+              "keyColumn": "userId",
+              "password": "",
+              "database": 0,
+              "timeout": 2000,
+              "maxTotal": 8,
+              "maxIdle": 8,
+              "minIdle": 0,
+              "maxRedirections": 5,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "REDIS_LOOKUP"
+            }
+          }
+        ],
+        "writer": [
+          {
+            "name": "streamwriter",
+            "parameter": {
+              "print": true,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "sink_test_0224"
+            }
+          }
+        ],
+        "transform": {
+          "sql": "select \n  t1.userId,\n  t1.username,\n  t1.url,\n  t1.username || '#' || t1.url as col1, \n  SUBSTRING(t1.username, 3) as col2,\n  t2.userId as t2_userId,\n  t2.username as t2_username,\n  t2.url as t2_url,\n  t2.clickTime as t2_clickTime \nfrom \n  localfs_source t1, \n  LATERAL TABLE(REDIS_LOOKUP(CAST(userId as varchar))) as t2(userId,username,url,clickTime)"
+        }
+      }
+    ],
+    "setting": {
+      "restore": {
+        "isRestore": false,
+        "isStream": false,
+        "maxRowNumForCheckpoint": 1
+      },
+      "log": {
+        "isLogger": false,
+        "level": "info",
+        "path": "/tmp/dtstack/flinkx/"
+      },
+      "speed": {
+        "channel": 1,
+        "bytes": 9223372036854775807
+      },
+      "errorLimit": {
+        "record": 0,
+        "percentage": 0.0
+      }
+    }
+  }
+}

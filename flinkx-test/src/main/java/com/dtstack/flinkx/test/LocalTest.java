@@ -139,7 +139,7 @@ public class LocalTest {
 //        conf.setString("metrics.reporter.promgateway.randomJobNameSuffix","true");
 //        conf.setString("metrics.reporter.promgateway.deleteOnShutdown","true");
 
-        String jobPath = "flinkx-test/src/main/resources/debug.json";
+        String jobPath = "flinkx-test/src/main/resources/ftp-stream.json";
         JobExecutionResult result = LocalTest.runJob(new File(jobPath), confProperties, null);
         ResultPrintUtil.printResult(result);
         System.exit(0);
@@ -343,7 +343,7 @@ public class LocalTest {
     private static TableFunction<Row> buildDimension(DataTransferConfig config, DimensionConfig dimensionConfig, StreamExecutionEnvironment env){
         String type = dimensionConfig.getType();
         TableFunction<Row> dimensionFunction;
-        switch (type){
+        switch (type.toLowerCase()){
             case "redis" : dimensionFunction = new RedisLookup(dimensionConfig); break;
             default:throw new IllegalArgumentException("Can not find dimension reader by type:" + type);
         }

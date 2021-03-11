@@ -1,0 +1,153 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": [
+          {
+            "name": "ftpreader",
+            "parameter": {
+              "username": "europa",
+              "password": "europa",
+              "protocol": "ftp",
+              "host": "192.168.1.84",
+              "port": 21,
+              "path": "shiy/flink/data",
+              "fieldDelimiter": ",",
+              "isFirstLineHeader": false,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "ftp_source"
+            }
+          }
+        ],
+        "dimension": [
+          {
+            "name": "shiy-url-click-cache-redis",
+            "type": "REDIS",
+            "parameter": {
+              "url": "info4:6379",
+              "table": "flink-redis-sink-1",
+              "keyColumn": "userId",
+              "password": "",
+              "database": 0,
+              "timeout": 2000,
+              "maxTotal": 8,
+              "maxIdle": 8,
+              "minIdle": 0,
+              "maxRedirections": 5,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "REDIS_LOOKUP"
+            }
+          }
+        ],
+        "writer": [
+          {
+            "name": "streamwriter",
+            "parameter": {
+              "print": true,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "sink_test_0224"
+            }
+          }
+        ],
+        "transform": {
+          "sql": "select t1.userId,t1.username,t1.url,t1.username || '#' || t1.url as col1, SUBSTRING(t1.username, 3) as col2,t2.userId as t2_userId,t2.username as t2_username,t2.url as t2_url,t2.clickTime as t2_clickTime from ftp_source t1, LATERAL TABLE(REDIS_LOOKUP(CAST(userId as varchar))) as t2(userId,username,url,clickTime)"
+        }
+      }
+    ],
+    "setting": {
+      "restore": {
+        "isRestore": false,
+        "isStream": false,
+        "maxRowNumForCheckpoint": 1
+      },
+      "log": {
+        "isLogger": false,
+        "level": "info",
+        "path": "/tmp/dtstack/flinkx/"
+      },
+      "speed": {
+        "channel": 1,
+        "bytes": 9223372036854775807
+      },
+      "errorLimit": {
+        "record": 0,
+        "percentage": 0.0
+      }
+    }
+  }
+}

@@ -192,6 +192,7 @@ public class Main {
         }
 
         JobExecutionResult result = env.execute(jobIdString);
+        result.getAllAccumulatorResults().forEach((name, val) -> LOG.info(name + ": " + val));
         if(env instanceof MyLocalStreamEnvironment){
             ResultPrintUtil.printResult(result);
         }
@@ -222,7 +223,7 @@ public class Main {
     private static TableFunction<Row> buildDimension(DataTransferConfig config, DimensionConfig dimensionConfig, StreamExecutionEnvironment env){
         String type = dimensionConfig.getType();
         TableFunction<Row> dimensionFunction;
-        switch (type){
+        switch (type.toLowerCase()){
             case "redis" : dimensionFunction = new RedisLookup(dimensionConfig); break;
             default:throw new IllegalArgumentException("Can not find dimension reader by type:" + type);
         }

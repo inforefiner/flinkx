@@ -22,19 +22,34 @@ import com.dtstack.flinkx.launcher.YarnConfLoader;
 import com.dtstack.flinkx.options.Options;
 import com.dtstack.flinkx.util.MapUtil;
 import org.apache.commons.lang.StringUtils;
+import org.apache.flink.api.common.JobID;
+import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.client.deployment.ClusterSpecification;
+import org.apache.flink.client.program.ClusterClient;
 import org.apache.flink.client.program.ClusterClientProvider;
+import org.apache.flink.runtime.client.JobStatusMessage;
 import org.apache.flink.runtime.jobgraph.JobGraph;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
+import org.apache.flink.util.OptionalFailure;
 import org.apache.flink.yarn.YarnClusterDescriptor;
 import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.api.records.FinalApplicationStatus;
+import org.apache.hadoop.yarn.api.records.YarnApplicationState;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 
 import static com.dtstack.flinkx.launcher.Launcher.*;
+import static org.apache.hadoop.yarn.api.records.FinalApplicationStatus.*;
 
 /**
  * Date: 2019/09/11
@@ -75,10 +90,70 @@ public class PerJobSubmitter {
         perJobClusterClientBuilder.init(launcherOptions, conProp);
 
         YarnClusterDescriptor descriptor = perJobClusterClientBuilder.createPerJobClusterDescriptor(launcherOptions);
+        YarnClient yarnClient = descriptor.getYarnClient();
         ClusterClientProvider<ApplicationId> provider = descriptor.deployJobCluster(clusterSpecification, jobGraph, true);
-        String applicationId = provider.getClusterClient().getClusterId().toString();
+        ClusterClient<ApplicationId> clusterClient = provider.getClusterClient();
+        String applicationId = clusterClient.getClusterId().toString();
         String flinkJobId = jobGraph.getJobID().toString();
+        Collection<JobStatusMessage> list = clusterClient.listJobs().get();
+        LOG.info("job size:" + list.size());
+        JobID jobId = list.iterator().next().getJobId();
         LOG.info("deploy per_job with appId: {}}, jobId: {}", applicationId, flinkJobId);
+        ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
+        String finalStatus = null;
+        Map<String, Object> metrics = new HashMap<>();
+        while (true) {
+            ApplicationReport applicationReport = yarnClient.getApplicationReport(appId);
+            YarnApplicationState state = applicationReport.getYarnApplicationState();
+            FinalApplicationStatus appFinalStatus = applicationReport.getFinalApplicationStatus();
+            LOG.debug("The application {} status is {}", appId, state);
+            if (YarnApplicationState.RUNNING == state) {
+                JobStatus flinkJobStatus = clusterClient.getJobStatus(jobId).get();
+                LOG.debug("flink job status: " + flinkJobStatus);
+                if (flinkJobStatus.isTerminalState()) {
+                    finalStatus = flinkJobStatus.name();
+                    break;
+                } else {
+                    CompletableFuture<Map<String, Object>> future = clusterClient.getAccumulators(jobId);
+                    Map<String, Object> map = future.get();
+                    for (Map.Entry<String, Object> entry : map.entrySet()) {
+                        metrics.put(entry.getKey(), entry.getValue());
+                    }
+                }
+            } else if (YarnApplicationState.FAILED == state ||
+                    YarnApplicationState.KILLED == state ||
+                    YarnApplicationState.FINISHED == state) {
+                /*
+                 * 结束状态应该获取finalStatus判断状态
+                 * */
+                switch (appFinalStatus) {
+                    case FAILED:
+                    case KILLED:
+                        finalStatus = "FAILED";
+                        break;
+                    case SUCCEEDED:
+                        finalStatus = "FINISHED";
+                        break;
+                }
+                break;
+            } else {
+                LOG.warn("Ignore {} state {}", appId, state);
+            }
+            Thread.sleep(1000 * 10);
+        }
+
+        LOG.info("print metrics information starting......");
+        for (Map.Entry<String, Object> entry : metrics.entrySet()) {
+            LOG.info(entry.getKey() + ": " + entry.getValue());
+        }
+        LOG.info("print metrics information finished.");
+
+        if ("FINISHED".equals(finalStatus)) {
+            LOG.info("TASK DONE");
+        }
+        if ("FAILED".equals(finalStatus)) {
+            LOG.info("TASK FAILED");
+        }
         return applicationId;
     }
 }
