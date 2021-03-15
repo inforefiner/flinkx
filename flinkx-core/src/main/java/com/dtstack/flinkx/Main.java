@@ -25,6 +25,7 @@ import com.dtstack.flinkx.options.OptionParser;
 import com.dtstack.flinkx.reader.BaseDataReader;
 import com.dtstack.flinkx.reader.DataReaderFactory;
 import com.dtstack.flinkx.udf.UserDefinedFunctionRegistry;
+import com.dtstack.flinkx.udf.udtf.JDBCLookup;
 import com.dtstack.flinkx.udf.udtf.RedisLookup;
 import com.dtstack.flinkx.util.ConvertUtil;
 import com.dtstack.flinkx.util.ResultPrintUtil;
@@ -225,6 +226,7 @@ public class Main {
         TableFunction<Row> dimensionFunction;
         switch (type.toLowerCase()){
             case "redis" : dimensionFunction = new RedisLookup(dimensionConfig); break;
+            case "jdbc"  : dimensionFunction = new JDBCLookup(dimensionConfig); break;
             default:throw new IllegalArgumentException("Can not find dimension reader by type:" + type);
         }
 

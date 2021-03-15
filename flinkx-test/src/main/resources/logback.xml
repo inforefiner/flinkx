@@ -20,5 +20,6 @@
     </logger>
 
     <logger name="com.dtstack.flinkx.udf.udtf.RedisLookup" level="DEBUG"/>
+    <logger name="com.dtstack.flinkx.udf.udtf.JDBCLookup" level="DEBUG"/>
 
 </configuration>

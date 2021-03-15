@@ -83,6 +83,7 @@ import com.dtstack.flinkx.sqlservercdc.reader.SqlservercdcReader;
 import com.dtstack.flinkx.stream.reader.StreamReader;
 import com.dtstack.flinkx.stream.writer.StreamWriter;
 import com.dtstack.flinkx.udf.UserDefinedFunctionRegistry;
+import com.dtstack.flinkx.udf.udtf.JDBCLookup;
 import com.dtstack.flinkx.udf.udtf.RedisLookup;
 import com.dtstack.flinkx.util.ConvertUtil;
 import com.dtstack.flinkx.util.ResultPrintUtil;
@@ -139,7 +140,7 @@ public class LocalTest {
 //        conf.setString("metrics.reporter.promgateway.randomJobNameSuffix","true");
 //        conf.setString("metrics.reporter.promgateway.deleteOnShutdown","true");
 
-        String jobPath = "flinkx-test/src/main/resources/ftp-stream.json";
+        String jobPath = "flinkx-test/src/main/resources/mysql-jdbc-stream.json";
         JobExecutionResult result = LocalTest.runJob(new File(jobPath), confProperties, null);
         ResultPrintUtil.printResult(result);
         System.exit(0);
@@ -345,6 +346,7 @@ public class LocalTest {
         TableFunction<Row> dimensionFunction;
         switch (type.toLowerCase()){
             case "redis" : dimensionFunction = new RedisLookup(dimensionConfig); break;
+            case "jdbc"  : dimensionFunction = new JDBCLookup(dimensionConfig); break;
             default:throw new IllegalArgumentException("Can not find dimension reader by type:" + type);
         }
 
