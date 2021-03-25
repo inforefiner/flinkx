@@ -20,10 +20,16 @@ package com.dtstack.flinkx.oracle.format;
 import com.dtstack.flinkx.enums.ColumnType;
 import com.dtstack.flinkx.rdb.inputformat.JdbcInputFormat;
 import com.dtstack.flinkx.rdb.util.DbUtil;
+import com.dtstack.flinkx.rdb.util.TypeUtil;
+import org.apache.flink.core.io.InputSplit;
 import org.apache.flink.types.Row;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.sql.Clob;
+import java.sql.NClob;
 import java.sql.Timestamp;
+import java.util.List;
 
 import static com.dtstack.flinkx.rdb.util.DbUtil.clobToString;
 
@@ -34,6 +40,13 @@ import static com.dtstack.flinkx.rdb.util.DbUtil.clobToString;
  * @author tudou
  */
 public class OracleInputFormat extends JdbcInputFormat {
+    private List<Integer> oracleColumnTypeList;
+
+    @Override
+    public void openInternal(InputSplit inputSplit) throws IOException {
+        super.openInternal(inputSplit);
+        oracleColumnTypeList = TypeUtil.analyzeColumn(resultSet);
+    }
 
     @Override
     public Row nextRecordInternal(Row row) throws IOException {
@@ -46,11 +59,39 @@ public class OracleInputFormat extends JdbcInputFormat {
             for (int pos = 0; pos < row.getArity(); pos++) {
                 Object obj = resultSet.getObject(pos + 1);
                 if(obj != null) {
-                    if((obj instanceof java.util.Date
-                            || obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP")) ) {
-                        obj = resultSet.getTimestamp(pos + 1);
+                    if (TypeUtil.isBinaryType(oracleColumnTypeList.get(pos))) {
+                        obj = resultSet.getBytes(pos + 1);
+                    } else if (TypeUtil.isClobType(oracleColumnTypeList.get(pos))) {
+                        Clob clob = resultSet.getClob(pos + 1);
+                        obj = clob.getSubString(1, (int) clob.length());
+                    } else if (TypeUtil.isNclobType(oracleColumnTypeList.get(pos))) {
+                        NClob nClob = resultSet.getNClob(pos + 1);
+                        obj = nClob.getSubString(1, (int) nClob.length());
+                    } else if (obj instanceof BigDecimal) {
+                        switch (metaColumns.get(pos).getType().toLowerCase()) {
+                            case "int":
+                                obj = resultSet.getInt(pos + 1);
+                                break;
+                            case "bigint":
+                                obj = resultSet.getLong(pos + 1);
+                                break;
+                            case "short":
+                                obj = resultSet.getShort(pos + 1);
+                                break;
+                            case "double":
+                                obj = resultSet.getDouble(pos + 1);
+                                break;
+                            case "float":
+                                obj = resultSet.getFloat(pos + 1);
+                                break;
+                        }
+                    } else {
+                        if((obj instanceof java.util.Date
+                                || obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP")) ) {
+                            obj = resultSet.getTimestamp(pos + 1);
+                        }
+                        obj = clobToString(obj);
                     }
-                    obj = clobToString(obj);
                 }
 
                 row.setField(pos, obj);

@@ -18,6 +18,7 @@
 package com.dtstack.flinkx.mysql.format;
 
 import com.dtstack.flinkx.rdb.inputformat.JdbcInputFormat;
+import com.dtstack.flinkx.rdb.util.TypeUtil;
 import com.dtstack.flinkx.util.DateUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,9 @@ import org.apache.flink.core.io.InputSplit;
 import org.apache.flink.types.Row;
 
 import java.io.IOException;
+import java.sql.Clob;
+import java.sql.NClob;
+import java.util.List;
 
 import static com.dtstack.flinkx.rdb.util.DbUtil.clobToString;
 
@@ -35,6 +39,7 @@ import static com.dtstack.flinkx.rdb.util.DbUtil.clobToString;
  * @author tudou
  */
 public class MysqlInputFormat extends JdbcInputFormat {
+    private List<Integer> mysqlColumnTypeList;
 
     @Override
     public void openInternal(InputSplit inputSplit) throws IOException {
@@ -45,6 +50,7 @@ public class MysqlInputFormat extends JdbcInputFormat {
             fetchSize = 1000;
         }
         super.openInternal(inputSplit);
+        mysqlColumnTypeList = TypeUtil.analyzeColumn(resultSet);
     }
 
     @Override
@@ -58,18 +64,29 @@ public class MysqlInputFormat extends JdbcInputFormat {
             for (int pos = 0; pos < row.getArity(); pos++) {
                 Object obj = resultSet.getObject(pos + 1);
                 if(obj != null) {
-                    if(CollectionUtils.isNotEmpty(columnTypeList)) {
-                        String columnType = columnTypeList.get(pos);
-                        if("year".equalsIgnoreCase(columnType)) {
-                            java.util.Date date = (java.util.Date) obj;
-                            obj = DateUtil.dateToYearString(date);
-                        } else if("tinyint".equalsIgnoreCase(columnType)
+                    if (TypeUtil.isBinaryType(mysqlColumnTypeList.get(pos))) {
+                        obj = resultSet.getBytes(pos + 1);
+                    } else if (TypeUtil.isClobType(mysqlColumnTypeList.get(pos))) {
+                        Clob clob = resultSet.getClob(pos + 1);
+                        obj = clob.getSubString(1, (int) clob.length());
+                    } else if (TypeUtil.isNclobType(mysqlColumnTypeList.get(pos))) {
+                        NClob nClob = resultSet.getNClob(pos + 1);
+                        obj = nClob.getSubString(1, (int) nClob.length());
+                    } else if (CollectionUtils.isNotEmpty(columnTypeList)) {
+                        if(CollectionUtils.isNotEmpty(columnTypeList)) {
+                            String columnType = columnTypeList.get(pos);
+                            if("year".equalsIgnoreCase(columnType)) {
+                                java.util.Date date = (java.util.Date) obj;
+                                obj = DateUtil.dateToYearString(date);
+                            } else if("tinyint".equalsIgnoreCase(columnType)
                                     || "bit".equalsIgnoreCase(columnType)) {
-                            if(obj instanceof Boolean) {
-                                obj = ((Boolean) obj ? 1 : 0);
+                                if(obj instanceof Boolean) {
+                                    obj = ((Boolean) obj ? 1 : 0);
+                                }
                             }
                         }
                     }
+
                     obj = clobToString(obj);
                 }
 
