@@ -108,17 +108,22 @@ public class PerJobSubmitter {
             FinalApplicationStatus appFinalStatus = applicationReport.getFinalApplicationStatus();
             LOG.debug("The application {} status is {}", appId, state);
             if (YarnApplicationState.RUNNING == state) {
-                JobStatus flinkJobStatus = clusterClient.getJobStatus(jobId).get();
-                LOG.debug("flink job status: " + flinkJobStatus);
-                if (flinkJobStatus.isTerminalState()) {
-                    finalStatus = flinkJobStatus.name();
-                    break;
-                } else {
-                    CompletableFuture<Map<String, Object>> future = clusterClient.getAccumulators(jobId);
-                    Map<String, Object> map = future.get();
-                    for (Map.Entry<String, Object> entry : map.entrySet()) {
-                        metrics.put(entry.getKey(), entry.getValue());
+                try {
+                    CompletableFuture<JobStatus> jobStatusFuture = clusterClient.getJobStatus(jobId);
+                    JobStatus flinkJobStatus = jobStatusFuture.get();
+                    LOG.debug("flink job status: " + flinkJobStatus);
+                    if (flinkJobStatus.isTerminalState()) {
+                        finalStatus = flinkJobStatus.name();
+                        break;
+                    } else {
+                        CompletableFuture<Map<String, Object>> future = clusterClient.getAccumulators(jobId);
+                        Map<String, Object> map = future.get();
+                        for (Map.Entry<String, Object> entry : map.entrySet()) {
+                            metrics.put(entry.getKey(), entry.getValue());
+                        }
                     }
+                } catch (Throwable e) {
+                    LOG.warn("fetch flink job latest metrics error, maybe the job is stop, use cache metrics");
                 }
             } else if (YarnApplicationState.FAILED == state ||
                     YarnApplicationState.KILLED == state ||
