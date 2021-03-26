@@ -148,21 +148,31 @@ public class JDBCLookup extends TableFunction<Row> {
 				}
 				try (ResultSet resultSet = statement.executeQuery()) {
 					if (cache == null) {
-						while (resultSet.next()) {
-							Row row = convertToRowFromResultSet(resultSet);
+						if (resultSet.next()) {
+							do {
+								Row row = convertToRowFromResultSet(resultSet);
+								LOG.debug("lookup result {}", row);
+								collect(row);
+							} while (resultSet.next());
+						} else {
+							Row row = new Row(outputSqlTypes.length);
 							collect(row);
-							LOG.debug("lookup result {}", row);
 						}
 					} else {
-						ArrayList<Row> rows = new ArrayList<>();
-						while (resultSet.next()) {
-							Row row = convertToRowFromResultSet(resultSet);
-							LOG.debug("lookup result {}", row);
-							rows.add(row);
+						if (resultSet.next()) {
+							ArrayList<Row> rows = new ArrayList<>();
+							do {
+								Row row = convertToRowFromResultSet(resultSet);
+								LOG.debug("lookup result {}", row);
+								rows.add(row);
+								collect(row);
+							} while (resultSet.next());
+							rows.trimToSize();
+							cache.put(keyRow, rows);
+						} else {
+							Row row = new Row(outputSqlTypes.length);
 							collect(row);
 						}
-						rows.trimToSize();
-						cache.put(keyRow, rows);
 					}
 				}
 				break;

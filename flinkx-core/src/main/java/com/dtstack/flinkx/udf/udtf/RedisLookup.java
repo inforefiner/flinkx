@@ -108,10 +108,14 @@ public class RedisLookup extends TableFunction<Row> {
         for (int i = 0; i < fieldNames.length; i++) {
             String filedType = filedTypes[i];
             String valueStr;
-            if (ArrayUtils.contains(keyIndexes, i)) {
-                valueStr = key;
+            if (value != null && !value.isEmpty()) {
+                if (ArrayUtils.contains(keyIndexes, i)) {
+                    valueStr = key;
+                } else {
+                    valueStr = value.get(fieldNames[i]);
+                }
             } else {
-                valueStr = value.get(fieldNames[i]);
+                valueStr = null;
             }
             Object convertedValue = ClassUtil.convert(valueStr, filedType);
             row.setField(i, convertedValue);
@@ -135,10 +139,14 @@ public class RedisLookup extends TableFunction<Row> {
         for (int i = 0; i < fieldNames.length; i++) {
             String filedType = filedTypes[i];
             String valueStr;
-            if (ArrayUtils.contains(keyIndexes, i)) {
-                valueStr = key;
+            if (value != null && !value.isEmpty()) {
+                if (ArrayUtils.contains(keyIndexes, i)) {
+                    valueStr = key;
+                } else {
+                    valueStr = value.get(fieldNames[i]);
+                }
             } else {
-                valueStr = value.get(fieldNames[i]);
+                valueStr = null;
             }
             Object convertedValue = ClassUtil.convert(valueStr, filedType);
             row.setField(i, convertedValue);
