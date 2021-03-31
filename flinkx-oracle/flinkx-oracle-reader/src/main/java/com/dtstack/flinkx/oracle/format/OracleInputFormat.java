@@ -85,11 +85,11 @@ public class OracleInputFormat extends JdbcInputFormat {
                                 obj = resultSet.getFloat(pos + 1);
                                 break;
                         }
+                    } else if (obj instanceof java.util.Date){
+                        obj = resultSet.getDate(pos + 1);
+                    } else if (obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP")){
+                        obj = resultSet.getTimestamp(pos + 1);
                     } else {
-                        if((obj instanceof java.util.Date
-                                || obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP")) ) {
-                            obj = resultSet.getTimestamp(pos + 1);
-                        }
                         obj = clobToString(obj);
                     }
                 }
