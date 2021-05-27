@@ -34,6 +34,7 @@ public enum EDatabaseType {
     MySQL,
     SQLServer,
     Oracle,
+    Oscar,
     PostgreSQL,
     Greenplum,
     DB2,

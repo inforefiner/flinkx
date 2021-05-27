@@ -59,6 +59,7 @@
         <module>flinkx-pulsar</module>
         <module>flinkx-restapi</module>
         <module>flinkx-kingbase</module>
+        <module>flinkx-oscar</module>
     </modules>
 
     <properties>
@@ -182,7 +183,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>4.0.0</version>
                 <configuration>
                     <reportOutputDirectory>javadocs</reportOutputDirectory>
                     <destDir>flinkx-java-docs</destDir>

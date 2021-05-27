@@ -59,6 +59,7 @@ public class PluginNameConstants {
     public static final String GREENPLUM_READER = "greenplumreader";
     public static final String LOCALFS_READER = "localfsreader";
     public static final String KINGBASE_READER = "kingbasereader";
+    public static final String OSCAR_READER = "oscarreader";
 
     public static final String STREAM_WRITER = "streamwriter";
     public static final String CARBONDATA_WRITER = "carbondatawriter";

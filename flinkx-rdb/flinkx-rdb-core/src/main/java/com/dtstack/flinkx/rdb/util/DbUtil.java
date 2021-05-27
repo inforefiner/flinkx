@@ -334,6 +334,24 @@ public class DbUtil {
         }
     }
 
+    public static boolean isTimezoneType(int sqlType) {
+        switch (sqlType) {
+            case Types.TIME_WITH_TIMEZONE:
+            case Types.TIMESTAMP_WITH_TIMEZONE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isTimeType(int sqlType) {
+        switch (sqlType) {
+            case Types.TIME:
+                return true;
+            default:
+                return false;
+        }
+    }
 
     /**
      * 获取表列名类型列表

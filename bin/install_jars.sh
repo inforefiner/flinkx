@@ -11,3 +11,6 @@ mvn install:install-file -DgroupId=com.esen.jdbc -DartifactId=gbase -Dversion=8.
 
 ## dm driver
 mvn install:install-file -DgroupId=dm.jdbc.driver -DartifactId=dm7 -Dversion=18.0.0 -Dpackaging=jar -Dfile=../jars/Dm7JdbcDriver18.jar
+
+## oscar driver
+mvn install:install-file -DgroupId=com.oscar.driver -DartifactId=oscar16 -Dversion=16.0.0 -Dpackaging=jar -Dfile=../jars/oscarJDBC16.jar

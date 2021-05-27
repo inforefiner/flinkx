@@ -58,7 +58,7 @@ public abstract class BaseRichInputFormatBuilder {
     }
 
     public void setDataTransferConfig(DataTransferConfig dataTransferConfig){
-        format.setDataTransferConfig(dataTransferConfig);
+        format.dataTransferConfig = dataTransferConfig;
     }
     /**
      * Check the value of parameters

@@ -4,12 +4,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.api.java.typeutils.TypeExtractor;
+import org.apache.hadoop.mapred.SequenceFileAsBinaryOutputFormat;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.sql.Blob;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.sql.Types;
@@ -196,6 +198,8 @@ public final class ConvertUtil {
                 return BigDecimal.class;
             case "object":
                 return Object.class;
+            case "binary":
+                return Blob.class;
             default:
                 throw new RuntimeException("Unsupported type " + type);
         }

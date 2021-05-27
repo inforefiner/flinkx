@@ -40,7 +40,8 @@ public class JdbcInputFormatBuilder extends BaseRichInputFormatBuilder {
     protected JdbcInputFormat format;
 
     public JdbcInputFormatBuilder(JdbcInputFormat format) {
-        super.format = this.format = format;
+        this.format = format;
+        super.format = format;
     }
 
     public void setDriverName(String driverName) {
