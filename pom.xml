@@ -18,6 +18,7 @@
 
         <!--******离线******-->
         <module>flinkx-rdb</module>
+        <module>flinkx-oscar</module>
         <module>flinkx-mysql</module>
         <module>flinkx-polardb</module>
         <module>flinkx-oracle</module>
@@ -59,7 +60,6 @@
         <module>flinkx-pulsar</module>
         <module>flinkx-restapi</module>
         <module>flinkx-kingbase</module>
-        <module>flinkx-oscar</module>
     </modules>
 
     <properties>

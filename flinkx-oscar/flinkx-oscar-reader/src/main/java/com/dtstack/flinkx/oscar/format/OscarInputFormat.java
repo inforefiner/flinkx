@@ -72,8 +72,7 @@ public class OscarInputFormat extends JdbcInputFormat {
                         Timestamp timestamp = resultSet.getTimestamp(pos + 1);
                         obj = timestamp.toString();
                     } else if (DbUtil.isTimeType(columnTypeList.get(pos))) {
-                        Time time = resultSet.getTime(pos + 1);
-                        obj = String.valueOf(time);
+                        obj = resultSet.getTimestamp(pos + 1);
                     } else if (CollectionUtils.isNotEmpty(descColumnTypeList)) {
                         String columnType = descColumnTypeList.get(pos);
                         if ("xml".equalsIgnoreCase(columnType) || "xmltype".equalsIgnoreCase(columnType)) {
@@ -85,9 +84,8 @@ public class OscarInputFormat extends JdbcInputFormat {
                         } else if ("timestamptz".equalsIgnoreCase(columnType)) {
                             Timestamp timestamp = resultSet.getTimestamp(pos + 1);
                             obj = String.valueOf(timestamp);
-                        } else if ("time".equalsIgnoreCase(columnType)) {
-                            Time time = resultSet.getTime(pos + 1);
-                            obj = String.valueOf(time);
+                        } else if ("time".equalsIgnoreCase(columnType)) { //JdbcUtils中将Time转化为了timestamp(getCatalystType)
+                            obj = resultSet.getTimestamp(pos + 1);
                         } else if ("label".equalsIgnoreCase(columnType)) {
                             try{
                                 obj = Float.parseFloat(String.valueOf(obj));
