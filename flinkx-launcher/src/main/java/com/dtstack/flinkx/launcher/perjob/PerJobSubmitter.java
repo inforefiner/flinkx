@@ -64,7 +64,7 @@ public class PerJobSubmitter {
         perJobClusterClientBuilder.init(options.getYarnconf(), config, conProp);
 
         AbstractYarnClusterDescriptor descriptor = perJobClusterClientBuilder.createPerJobClusterDescriptor(conProp, options, jobGraph);
-        ClusterClient<ApplicationId> clusterClient = descriptor.deployJobCluster(clusterSpecification, new JobGraph(), false);
+        ClusterClient<ApplicationId> clusterClient = descriptor.deployJobCluster(clusterSpecification, jobGraph, false);
         String applicationId = clusterClient.getClusterId().toString();
         Collection<JobStatusMessage> list = clusterClient.listJobs().get();
         LOG.info("job size:" + list.size());

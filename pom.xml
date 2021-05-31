@@ -13,15 +13,15 @@
         <module>flinkx-core</module>
 
         <module>flinkx-launcher</module>
-        <module>flinkx-test</module>
-        <module>flinkx-stream</module>
+        <!--<module>flinkx-test</module>
+        <module>flinkx-stream</module>-->
 
         <!--******离线******-->
         <module>flinkx-rdb</module>
         <module>flinkx-oscar</module>
         <module>flinkx-mysql</module>
-        <module>flinkx-polardb</module>
         <module>flinkx-oracle</module>
+        <!--<module>flinkx-polardb</module>
         <module>flinkx-sqlserver</module>
         <module>flinkx-postgresql</module>
         <module>flinkx-db2</module>
@@ -30,10 +30,10 @@
         <module>flinkx-clickhouse</module>
         <module>flinkx-saphana</module>
         <module>flinkx-teradata</module>
-        <module>flinkx-greenplum</module>
+        <module>flinkx-greenplum</module>-->
 
         <module>flinkx-hdfs</module>
-        <module>flinkx-hive</module>
+        <!--<module>flinkx-hive</module>
         <module>flinkx-es</module>
         <module>flinkx-ftp</module>
         <module>flinkx-odps</module>
@@ -46,26 +46,27 @@
         <module>flinkx-redis</module>
         <module>flinkx-mongodb</module>
 
-        <module>flinkx-localfs</module>
+        <module>flinkx-localfs</module>-->
 
         <!--******实时******-->
-        <module>flinkx-binlog</module>
-        <module>flinkx-pgwal</module>
+        <!--<module>flinkx-binlog</module>
+        <module>flinkx-pgwal</module>-->
         <module>flinkx-kb</module>
-        <module>flinkx-kafka09</module>
+        <!--<module>flinkx-kafka09</module>-->
         <module>flinkx-kafka10</module>
         <module>flinkx-kafka11</module>
         <module>flinkx-kafka</module>
-        <module>flinkx-emqx</module>
+        <!--<module>flinkx-emqx</module>
         <module>flinkx-pulsar</module>
         <module>flinkx-restapi</module>
-        <module>flinkx-kingbase</module>
+        <module>flinkx-kingbase</module>-->
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <scala.binary.version>2.10</scala.binary.version>
-        <flink.version>1.8.3</flink.version>
+        <!--it should be same as local Flink_HOME version-->
+        <flink.version>1.8.1</flink.version>
         <hadoop.version>2.7.3</hadoop.version>
         <http.version>4.5.3</http.version>
         <dev.path>${basedir}/dev</dev.path>
