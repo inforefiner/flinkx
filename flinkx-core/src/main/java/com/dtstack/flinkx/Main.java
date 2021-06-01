@@ -95,8 +95,8 @@ public class Main {
         // 解析jobPath指定的任务配置文件
         DataTransferConfig config = DataTransferConfig.parse(job);
         speedTest(config);
-
-        if (StringUtils.isNotEmpty(monitor)) {
+        LOG.info("monitor is :{}", monitor);
+        if (StringUtils.isNotEmpty(monitor) && !"application_default".equalsIgnoreCase(monitor)) {
             config.setMonitorUrls(monitor);
         }
 

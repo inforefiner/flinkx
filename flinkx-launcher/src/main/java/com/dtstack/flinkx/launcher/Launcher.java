@@ -161,7 +161,7 @@ public class Launcher {
                 }
 
                 argList.add("-monitor");
-                argList.add("");
+                argList.add("application_default");
 
                 //jdk内在优化，使用空数组效率更高
                 String[] remoteArgs = argList.toArray(new String[0]);
