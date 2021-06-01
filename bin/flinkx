@@ -20,6 +20,8 @@
 set -e
 
 export FLINKX_HOME="$(cd "`dirname "$0"`"/..; pwd)"
+export FLINK_HOME=/app/flink-1.10.1
+export FLINK_PLUGINS_DIR=${FLINK_HOME}/plugins
 
 # Find the java binary
 if [ -n "${JAVA_HOME}" ]; then
@@ -33,9 +35,12 @@ else
   fi
 fi
 
-JAR_DIR=$FLINKX_HOME/lib/*
+JAR_DIR=$FLINKX_HOME/conf:$FLINKX_HOME/lib/*
 CLASS_NAME=com.dtstack.flinkx.launcher.Launcher
 
 echo "flinkx starting ..."
-nohup $JAVA_RUN -cp $JAR_DIR $CLASS_NAME $@ &
-tail -f nohup.out
+echo "flinkx home "$FLINKX_HOME
+echo "flink home "$FLINK_HOME
+echo $JAVA_RUN" "$JAVA_OPTS" -cp "$JAR_DIR" "$CLASS_NAME" "$0
+#JAVA_OPTS="${JAVA_OPTS} -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=8411"
+$JAVA_RUN ${JAVA_OPTS} -cp $JAR_DIR $CLASS_NAME $@

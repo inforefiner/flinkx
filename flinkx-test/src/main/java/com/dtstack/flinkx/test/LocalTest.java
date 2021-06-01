@@ -95,7 +95,9 @@ import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
+import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -126,12 +128,13 @@ public class LocalTest {
     private static final int FAILURE_INTERVAL = 6;
     private static final int DELAY_INTERVAL = 10;
     public static Logger LOG = LoggerFactory.getLogger(LocalTest.class);
-    public static Configuration conf = new Configuration();
+    public static Configuration conf = GlobalConfiguration.loadConfiguration("E:\\GitHub\\test\\flinkx\\flinkx-test\\src\\main\\resources");;
 
     public static void main(String[] args) throws Exception{
         Properties confProperties = new Properties();
-//        confProperties.put("flink.checkpoint.interval", "10000");
-//        confProperties.put("flink.checkpoint.stateBackend", "file:///tmp/flinkx_checkpoint");
+        confProperties.put(ConfigConstant.FLINK_CHECKPOINT_INTERVAL_KEY, "5000");
+        confProperties.put(ConfigConstant.FLINK_CHECKPOINT_TIMEOUT_KEY, "60000");
+        confProperties.put(ConfigConstant.FLINK_CHECKPOINT_PATH_KEY, "file:///tmp/shiy/flinkx_checkpoint");
 
 //        conf.setString("metrics.reporter.promgateway.class","org.apache.flink.metrics.prometheus.PrometheusPushGatewayReporter");
 //        conf.setString("metrics.reporter.promgateway.host","127.0.0.1");
@@ -140,7 +143,7 @@ public class LocalTest {
 //        conf.setString("metrics.reporter.promgateway.randomJobNameSuffix","true");
 //        conf.setString("metrics.reporter.promgateway.deleteOnShutdown","true");
 
-        String jobPath = "flinkx-test/src/main/resources/mysql-jdbc-stream.json";
+        String jobPath = "flinkx-test/src/main/resources/debug.json";
         JobExecutionResult result = LocalTest.runJob(new File(jobPath), confProperties, null);
         ResultPrintUtil.printResult(result);
         System.exit(0);
@@ -371,6 +374,12 @@ public class LocalTest {
             env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
             env.getCheckpointConfig().enableExternalizedCheckpoints(
                     CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+
+            String path = properties.getProperty(ConfigConstant.FLINK_CHECKPOINT_PATH_KEY);
+            if (org.apache.commons.lang3.StringUtils.isNotBlank(path)) {
+                LOG.info("Checkpoint data in {}", path);
+                env.setStateBackend(new FsStateBackend(path, true));
+            }
         }
     }
 }

@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -66,6 +67,10 @@ public class Launcher {
     public static final String MAIN_CLASS = "com.dtstack.flinkx.Main";
 
     public static void main(String[] args) throws Exception {
+        System.out.println("launch job with args " + StringUtils.join(args, " "));
+        String name = ManagementFactory.getRuntimeMXBean().getName();
+        String pid = name.split("@")[0];
+        System.out.println(String.format("#PID=%s#", pid));
         OptionParser optionParser = new OptionParser(args);
         Options launcherOptions = optionParser.getOptions();
         findDefaultConfigDir(launcherOptions);

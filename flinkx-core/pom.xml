@@ -157,6 +157,17 @@
         </dependency>
 
         <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.46</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.noraui</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>12.2.0.1</version>
+        </dependency>
+
+        <dependency>
             <groupId>joda-time</groupId>
             <artifactId>joda-time</artifactId>
             <version>2.10.5</version>
@@ -225,6 +236,9 @@
                                     <include>commons-*:*</include>
                                     <include>redis.clients:*</include>
                                     <include>org.apache.commons:commons-pool2</include>
+                                    <include>mysql:*</include>
+                                    <include>com.github.noraui:*</include>
+                                    <include>org.jasypt:jasypt</include>
                                 </includes>
                             </artifactSet>
                             <relocations>

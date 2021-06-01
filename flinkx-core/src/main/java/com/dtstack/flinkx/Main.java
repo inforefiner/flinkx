@@ -41,6 +41,7 @@ import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.GlobalConfiguration;
 import org.apache.flink.runtime.jobgraph.SavepointRestoreSettings;
+import org.apache.flink.runtime.state.filesystem.FsStateBackend;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSink;
@@ -87,6 +88,8 @@ public class Main {
         String savepointPath = options.getS();
         String remotePluginPath = options.getRemotePluginPath();
         Properties confProperties = parseConf(options.getConfProp());
+
+        LOG.info("job {} start to run", jobIdString);
 
         // 解析jobPath指定的任务配置文件
         DataTransferConfig config = DataTransferConfig.parse(job);
@@ -194,6 +197,7 @@ public class Main {
 
         JobExecutionResult result = env.execute(jobIdString);
         result.getAllAccumulatorResults().forEach((name, val) -> LOG.info(name + ": " + val));
+        LOG.info("TASK DONE"); // local模式需要此日志标识任务成功或者失败
         if(env instanceof MyLocalStreamEnvironment){
             ResultPrintUtil.printResult(result);
         }
@@ -298,6 +302,12 @@ public class Main {
             env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
             env.getCheckpointConfig().enableExternalizedCheckpoints(
                     CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
+
+            String path = properties.getProperty(ConfigConstant.FLINK_CHECKPOINT_PATH_KEY);
+            if (StringUtils.isNotBlank(path)) {
+                LOG.info("Checkpoint data in {}", path);
+                env.setStateBackend(new FsStateBackend(path, true));
+            }
         }
         return env;
     }

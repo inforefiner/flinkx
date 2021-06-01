@@ -98,7 +98,7 @@ public class PerJobSubmitter {
         Collection<JobStatusMessage> list = clusterClient.listJobs().get();
         LOG.info("job size:" + list.size());
         JobID jobId = list.iterator().next().getJobId();
-        LOG.info("deploy per_job with appId: {}}, jobId: {}", applicationId, flinkJobId);
+        LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, flinkJobId);
         ApplicationId appId = ConverterUtils.toApplicationId(applicationId);
         String finalStatus = null;
         Map<String, Object> metrics = new HashMap<>();

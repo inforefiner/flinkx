@@ -1,0 +1,144 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": [
+          {
+            "name": "ftpreader",
+            "parameter": {
+              "username": "europa",
+              "password": "europa",
+              "protocol": "ftp",
+              "host": "192.168.1.84",
+              "port": 21,
+              "path": "shiy/flink/data",
+              "fieldDelimiter": ",",
+              "isFirstLineHeader": false,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "ftp_source"
+            }
+          }
+        ],
+        "dimension": [
+          {
+            "name": "shiy-url-click-cache-jdbc",
+            "type": "JDBC",
+            "parameter": {
+              "driver": "com.mysql.jdbc.Driver",
+              "url": "jdbc:mysql://192.168.1.82:3306/test",
+              "table": "user_click_cache_copy",
+              "password": "AES(cad2fb721d282f6e5151605a1874ffe4)",
+              "keyColumn": "userId",
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int"
+                },
+                {
+                  "name": "username",
+                  "type": "string"
+                },
+                {
+                  "name": "url",
+                  "type": "string"
+                },
+                {
+                  "name": "clickTime",
+                  "type": "timestamp"
+                }
+              ],
+              "tableName": "JDBC_LOOKUP"
+            }
+          }
+        ],
+        "writer": [
+          {
+            "name": "hdfswriter",
+            "parameter": {
+              "defaultFS": "hdfs://info1:8020",
+              "path": "/tmp/shiy/collector/shiy-url-click-cache",
+              "fileType": "text",
+              "fieldDelimiter": ",",
+              "maxFileSize": 1073741824,
+              "column": [
+                {
+                  "name": "userId",
+                  "type": "int",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "username",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "url",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                },
+                {
+                  "name": "clickTime",
+                  "type": "string",
+                  "alias": "",
+                  "description": ""
+                }
+              ],
+              "tableName": "shiy-url-click-cache"
+            }
+          }
+        ],
+        "transform": {
+          "sql": "select t1.userId,t1.username,t1.url,t1.username || '#' || t1.url as col1, SUBSTRING(t1.username, 3) as col2,t2.userId as t2_userId,t2.username as t2_username,t2.url as t2_url,t2.clickTime as t2_clickTime from ftp_source t1, LATERAL TABLE(JDBC_LOOKUP(CAST(userId as varchar))) as t2(userId,username,url,clickTime)"
+        }
+      }
+    ],
+    "setting": {
+      "restore": {
+        "isRestore": false,
+        "isStream": false,
+        "maxRowNumForCheckpoint": 1
+      },
+      "log": {
+        "isLogger": false,
+        "level": "info",
+        "path": "/tmp/dtstack/flinkx/"
+      },
+      "speed": {
+        "channel": 1,
+        "bytes": 9223372036854775807
+      },
+      "errorLimit": {
+        "record": 0,
+        "percentage": 0.0
+      }
+    }
+  }
+}

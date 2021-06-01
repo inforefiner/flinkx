@@ -95,28 +95,8 @@
                   "type": "string"
                 },
                 {
-                  "name": "col1",
-                  "type": "string"
-                },
-                {
-                  "name": "col2",
-                  "type": "string"
-                },
-                {
-                  "name": "t2_userId",
-                  "type": "string"
-                },
-                {
-                  "name": "t2_username",
-                  "type": "string"
-                },
-                {
-                  "name": "t2_url",
-                  "type": "string"
-                },
-                {
-                  "name": "t2_clickTime",
-                  "type": "string"
+                  "name": "clickTime",
+                  "type": "timestamp"
                 }
               ],
               "tableName": "sink_test_0224"
@@ -124,7 +104,7 @@
           }
         ],
         "transform": {
-          "sql": "select t1.userId,t1.username,t1.url,t1.username ||'#' || t1.url as col1,SUBSTRING(t1.username,3) as col2,t2.userId as t2_userId,t2.username as t2_username,t2.url as t2_url,t2.clickTime as t2_clickTime from mysql_source t1,LATERAL TABLE(REDIS_LOOKUP(CAST(userId as varchar))) as t2(userId,username,url,clickTime)"
+          "sql": "select * from mysql_source"
         }
       }
     ],

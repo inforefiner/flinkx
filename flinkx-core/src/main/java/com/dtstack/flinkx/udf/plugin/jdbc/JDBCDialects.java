@@ -31,7 +31,8 @@ public final class JDBCDialects {
 	private static final List<JDBCDialect> DIALECTS = Arrays.asList(
 		new DerbyDialect(),
 		new MySQLDialect(),
-		new PostgresDialect()
+		new PostgresDialect(),
+		new OracleDialect()
 	);
 
 	/**
@@ -83,6 +84,43 @@ public final class JDBCDialects {
 		@Override
 		public String quoteIdentifier(String identifier) {
 			return "`" + identifier + "`";
+		}
+
+		/**
+		 * Mysql upsert query use DUPLICATE KEY UPDATE.
+		 *
+		 * <p>NOTE: It requires Mysql's primary key to be consistent with pkFields.
+		 *
+		 * <p>We don't use REPLACE INTO, if there are other fields, we can keep their previous values.
+		 */
+		@Override
+		public Optional<String> getUpsertStatement(String tableName, String[] fieldNames, String[] uniqueKeyFields) {
+			String updateClause = Arrays.stream(fieldNames)
+					.map(f -> quoteIdentifier(f) + "=VALUES(" + quoteIdentifier(f) + ")")
+					.collect(Collectors.joining(", "));
+			return Optional.of(getInsertIntoStatement(tableName, fieldNames) +
+					" ON DUPLICATE KEY UPDATE " + updateClause
+			);
+		}
+	}
+
+	private static class OracleDialect implements JDBCDialect {
+
+		private static final long serialVersionUID = 1L;
+
+		@Override
+		public boolean canHandle(String url) {
+			return url.startsWith("jdbc:oracle:");
+		}
+
+		@Override
+		public Optional<String> defaultDriverName() {
+			return Optional.of("oracle.jdbc.driver.OracleDriver");
+		}
+
+		@Override
+		public String quoteIdentifier(String identifier) {
+			return "\"" + identifier + "\"";
 		}
 
 		/**
