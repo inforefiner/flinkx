@@ -116,7 +116,7 @@ public class OscarInputFormat extends JdbcInputFormat {
         ts.setNanos(DbUtil.getNanos(location));
         timeStr = DbUtil.getNanosTimeStr(ts.toString());
 
-        if(ColumnType.TIMESTAMP.name().equals(incrementColType)){
+        if(ColumnType.TIMESTAMP.name().toLowerCase().equals(incrementColType.toLowerCase())){
             timeStr = String.format("TO_TIMESTAMP('%s','YYYY-MM-DD HH24:MI:SS:FF6')",timeStr);
         } else {
             timeStr = timeStr.substring(0, 19);
