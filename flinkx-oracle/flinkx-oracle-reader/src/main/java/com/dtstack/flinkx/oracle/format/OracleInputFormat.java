@@ -83,7 +83,9 @@ public class OracleInputFormat extends JdbcInputFormat {
                                 break;
                         }
                     } else {
-                        if ((obj instanceof java.util.Date || obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP"))) {
+                        if ((obj instanceof java.util.Date)) {
+                            obj = resultSet.getDate(pos + 1);
+                        } else if (obj.getClass().getSimpleName().toUpperCase().contains("TIMESTAMP")){
                             obj = resultSet.getTimestamp(pos + 1);
                         }
                     }
