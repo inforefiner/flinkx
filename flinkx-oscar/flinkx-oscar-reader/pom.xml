@@ -26,7 +26,7 @@
             <groupId>com.dtstack.flinkx</groupId>
             <artifactId>flinkx-rdb-reader</artifactId>
             <version>1.6</version>
-            <!--<scope>provided</scope>-->
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
