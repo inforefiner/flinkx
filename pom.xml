@@ -21,11 +21,11 @@
         <module>flinkx-oscar</module>
         <module>flinkx-mysql</module>
         <module>flinkx-oracle</module>
-        <!--<module>flinkx-polardb</module>
+        <!--<module>flinkx-polardb</module>-->
         <module>flinkx-sqlserver</module>
-        <module>flinkx-postgresql</module>
+		<!--<module>flinkx-postgresql</module> -->
         <module>flinkx-db2</module>
-        <module>flinkx-dm</module>
+        <!--<module>flinkx-dm</module>
         <module>flinkx-gbase</module>
         <module>flinkx-clickhouse</module>
         <module>flinkx-saphana</module>
@@ -58,8 +58,8 @@
         <module>flinkx-kafka</module>
         <!--<module>flinkx-emqx</module>
         <module>flinkx-pulsar</module>
-        <module>flinkx-restapi</module>
-        <module>flinkx-kingbase</module>-->
+        <module>flinkx-restapi</module>-->
+        <module>flinkx-kingbase</module>
     </modules>
 
     <properties>
