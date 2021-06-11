@@ -15,48 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.dtstack.flinkx.kingbase8.reader.reader;
 
-package com.dtstack.flinkx.enums;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
-import org.apache.commons.net.ftp.FTP;
+import com.dtstack.flinkx.config.DataTransferConfig;
+import com.dtstack.flinkx.kingbase.reader.KingbaseReader;
+import com.dtstack.flinkx.kingbase8.core.Kingbase8DatabaseMeta;
 
-/**
- * Database type
- *
- * Company: www.dtstack.com
- * @author jiangbo
- */
-public enum EDatabaseType {
+public class Kingbase8Reader extends KingbaseReader {
 
-    /**
-     * database type
-     */
-    MySQL,
-    SQLServer,
-    Oracle,
-    Oscar,
-    PostgreSQL,
-    Greenplum,
-    DB2,
-    MongoDB,
-    Redis,
-    ES,
-    SapHana,
-    TeraData,
-    Kingbase,
-    Kingbase8,
-
-    /**
-     * contains ftp and sftp
-     */
-    FTP,
-    Hbase,
-    ODPS,
-    STREAM,
-    Carbondata,
-    GBase,
-    clickhouse,
-    polarDB,
-    Phoenix,
-    dm,
+    public Kingbase8Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
+        super(config, env);
+        setDatabaseInterface(new Kingbase8DatabaseMeta());
+    }
 }

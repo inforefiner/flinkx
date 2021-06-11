@@ -44,12 +44,12 @@ public class KingbaseDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
     public EDatabaseType getDatabaseType() {
-        return EDatabaseType.kingbase;
+        return EDatabaseType.Kingbase;
     }
 
     @Override
     public String getDriverClass() {
-        return "kingbase.jdbc.driver.KingbaseDriver";
+        return "com.kingbase8.Driver";
     }
 
     @Override

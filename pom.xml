@@ -60,7 +60,8 @@
         <module>flinkx-pulsar</module>
         <module>flinkx-restapi</module>-->
         <module>flinkx-kingbase</module>
-    </modules>
+        <module>flinkx-kingbase8</module>
+  </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
