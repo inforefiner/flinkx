@@ -23,7 +23,7 @@
         <module>flinkx-oracle</module>
         <!--<module>flinkx-polardb</module>-->
         <module>flinkx-sqlserver</module>
-		<!--<module>flinkx-postgresql</module> -->
+		<module>flinkx-postgresql</module>
         <module>flinkx-db2</module>
         <!--<module>flinkx-dm</module>
         <module>flinkx-gbase</module>

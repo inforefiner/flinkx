@@ -12,7 +12,8 @@ import java.sql.NClob;
 import java.util.List;
 
 public class KingbaseInputFormat extends JdbcInputFormat {
-    private List<Integer> columnTypeList;
+	private static final long serialVersionUID = -4903208812265479359L;
+	private List<Integer> columnTypeList;
 
     @Override
     public void openInternal(InputSplit inputSplit) throws IOException {
