@@ -149,7 +149,18 @@ public class Main {
         List<Map<String, String>> mapList = (List<Map<String, String>>) config.getJob().getContent().get(0).getWriter().getParameter().getVal("encrypt");
 
         if (mapList == null || mapList.size() == 0) {
-            return;
+            mapList = new ArrayList<Map<String, String>>();
+            LOG.error("encrypt fields is empty, exit !!!");
+            List<Map<String, String>> columnList = (List<Map<String, String>>) config.getJob().getContent().get(0).getWriter().getParameter().getVal("column");
+            for(Map<String, String> column : columnList){
+                String name = column.get("name");
+                if(name != null  && name.indexOf(":") > -1){
+                    name = name.substring(name.indexOf(":")+1);
+                }
+                Map<String, String> map = new HashMap<>();
+                map.put("name", name);
+                mapList.add(map);
+            }
         }
 
         //构造sql

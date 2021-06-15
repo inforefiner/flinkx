@@ -104,24 +104,46 @@ public class OscarInputFormat extends JdbcInputFormat {
     }
 
     /**
+     * 构建边界位置sql
+     *
+     * @param incrementColType 增量字段类型
+     * @param incrementCol     增量字段名称
+     * @param location         边界位置(起始/结束)
+     * @param operator         判断符( >, >=,  <)
+     * @return
+     */
+    @Override
+    protected String getLocationSql(String incrementColType, String incrementCol, String location, String operator) {
+        String endTimeStr;
+        String endLocationSql;
+        boolean isTimeType = ColumnType.isTimeType(incrementColType);
+        if (isTimeType) {
+            endTimeStr = getTimeStr(Long.parseLong(location), incrementColType);
+            if(ColumnType.TIMESTAMP.name().toLowerCase().equals(incrementColType.toLowerCase()) || ColumnType.DATE.name().toLowerCase().equals(incrementColType.toLowerCase())){
+                endLocationSql = "UNIX_TIMESTAMP("+incrementCol+")" + operator + endTimeStr;
+            } else {
+                endLocationSql = incrementCol + operator + endTimeStr;
+            }
+        } else if (ColumnType.isNumberType(incrementColType)) {
+            endLocationSql = incrementCol + operator + location;
+        } else {
+            endTimeStr = String.format("'%s'", location);
+            endLocationSql = incrementCol + operator + endTimeStr;
+        }
+
+        return endLocationSql;
+    }
+
+    /**
      * 构建时间边界字符串
      * @param location          边界位置(起始/结束)
      * @param incrementColType  增量字段类型
-     * @return
+     * @return 秒字符串
      */
     @Override
     protected String getTimeStr(Long location, String incrementColType){
         String timeStr;
-        Timestamp ts = new Timestamp(DbUtil.getMillis(location));
-        ts.setNanos(DbUtil.getNanos(location));
-        timeStr = DbUtil.getNanosTimeStr(ts.toString());
-
-        if(ColumnType.TIMESTAMP.name().toLowerCase().equals(incrementColType.toLowerCase())){
-            timeStr = String.format("TO_TIMESTAMP('%s','YYYY-MM-DD HH24:MI:SS:FF6')",timeStr);
-        } else {
-            timeStr = timeStr.substring(0, 19);
-            timeStr = String.format("TO_DATE('%s','YYYY-MM-DD HH24:MI:SS')", timeStr);
-        }
+        timeStr = String.valueOf(DbUtil.getMillis(location)/1000); //秒
 
         return timeStr;
     }
