@@ -27,8 +27,8 @@ import java.util.Map;
 /**
  * The class of PostgreSQL database prototype
  *
- * @Company: www.dtstack.com
  * @author jiangbo
+ * @Company: www.dtstack.com
  */
 public class PostgresqlDatabaseMeta extends BaseDatabaseMeta {
 
@@ -49,7 +49,7 @@ public class PostgresqlDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
     public String quoteValue(String value, String column) {
-        return String.format("'%s' as %s",value,column);
+        return String.format("'%s' as %s", value, column);
     }
 
     @Override
@@ -64,18 +64,18 @@ public class PostgresqlDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
     public String getSqlQueryFields(String tableName) {
-        return String.format("SELECT * FROM %s LIMIT 0",tableName);
+        return String.format("SELECT * FROM %s LIMIT 0", tableName);
     }
 
     @Override
     public String getSqlQueryColumnFields(List<String> column, String table) {
-        String sql = "select attrelid ::regclass as table_name, attname as col_name, atttypid ::regtype as col_type from pg_attribute \n" +
-                "where attrelid = '%s' ::regclass and attnum > 0 and attisdropped = 'f'";
-        return String.format(sql,table);
+        String sql = "select attrelid ::regclass as table_name, attname as col_name, atttypid ::regtype as col_type from pg_attribute \n"
+            + "where attrelid = '%s' ::regclass and attnum > 0 and attisdropped = 'f'";
+        return String.format(sql, table);
     }
 
     @Override
-    public String getUpsertStatement(List<String> column, String table, Map<String,List<String>> updateKey) {
+    public String getUpsertStatement(List<String> column, String table, Map<String, List<String>> updateKey) {
         throw new UnsupportedOperationException("PostgreSQL not support update mode");
     }
 
@@ -90,12 +90,12 @@ public class PostgresqlDatabaseMeta extends BaseDatabaseMeta {
     }
 
     @Override
-    public int getFetchSize(){
+    public int getFetchSize() {
         return 1000;
     }
 
     @Override
-    public int getQueryTimeout(){
+    public int getQueryTimeout() {
         return 1000;
     }
 }

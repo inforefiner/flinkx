@@ -49,7 +49,7 @@ public class KingbaseDatabaseMeta extends BaseDatabaseMeta {
 
     @Override
     public String getDriverClass() {
-        return "com.kingbase8.Driver";
+        return "com.kingbase.Driver";
     }
 
     @Override
