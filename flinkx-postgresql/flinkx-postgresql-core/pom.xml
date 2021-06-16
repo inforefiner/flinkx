@@ -12,11 +12,10 @@
     <artifactId>flinkx-postgresql-core</artifactId>
 
     <dependencies>
-
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.2.2</version>
+            <version>42.2.19</version>
         </dependency>
     </dependencies>
 </project>

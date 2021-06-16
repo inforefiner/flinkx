@@ -14,7 +14,7 @@
     <modules>
         <module>flinkx-db2-core</module>
         <module>flinkx-db2-reader</module>
-        <module>flinkx-db2-writer</module>
+        <!-- <module>flinkx-db2-writer</module> -->
     </modules>
 
     <dependencies>

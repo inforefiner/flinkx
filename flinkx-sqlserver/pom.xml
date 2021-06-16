@@ -13,9 +13,9 @@
     <artifactId>flinkx-sqlserver</artifactId>
 
     <modules>
-        <module>flinkx-sqlserver-reader</module>
-        <module>flinkx-sqlserver-writer</module>
         <module>flinkx-sqlserver-core</module>
+        <module>flinkx-sqlserver-reader</module>
+        <!-- <module>flinkx-sqlserver-writer</module> -->
     </modules>
 
     <dependencies>
