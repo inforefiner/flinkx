@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.dtstack.flinkx.kingbase8.reader.reader;
+package com.dtstack.flinkx.kingbase8.reader;
 
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
-import com.dtstack.flinkx.kingbase.reader.KingbaseReader;
 import com.dtstack.flinkx.kingbase8.core.Kingbase8DatabaseMeta;
+import com.dtstack.flinkx.rdb.datareader.JdbcDataReader;
 
-public class Kingbase8Reader extends KingbaseReader {
+public class Kingbase8Reader extends JdbcDataReader {
 
     public Kingbase8Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
         super(config, env);

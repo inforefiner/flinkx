@@ -1,4 +1,4 @@
-package com.dtstack.flinkx.kingbase8.reader.format;
+package com.dtstack.flinkx.kingbase8.format;
 
 import java.io.IOException;
 import java.sql.Clob;
@@ -6,6 +6,7 @@ import java.sql.NClob;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +29,7 @@ public class Kingbase8InputFormat extends JdbcInputFormat {
 			"int2vector", "oidvector", // vector类型
 			"tsvector", "tsquery", // 文本搜索类型
 			"uuid", // UUID类型
-			"cid", "interval", "sys_lsn", "txid_snapshot"//
+			"tid", "cid", "xid", "xid8", "varbit", "interval", "sys_lsn", "txid_snapshot"//
 	);
 
 	@Override
@@ -83,6 +84,8 @@ public class Kingbase8InputFormat extends JdbcInputFormat {
 						} else if (OBJECT_TYPES.contains(columnType.toLowerCase())) {
 							if (obj instanceof KBobject) {
 								obj = ((KBobject) obj).getValue();
+							} else if (obj instanceof UUID) {
+								obj = ((UUID) obj).toString();
 							}
 						}
 					}
