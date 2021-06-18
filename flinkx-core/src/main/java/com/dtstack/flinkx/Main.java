@@ -150,7 +150,7 @@ public class Main {
 
         if (mapList == null || mapList.size() == 0) {
             mapList = new ArrayList<Map<String, String>>();
-            LOG.error("encrypt fields is empty, exit !!!");
+            LOG.warn("encrypt fields is empty, exit !!!");
             List<Map<String, String>> columnList = (List<Map<String, String>>) config.getJob().getContent().get(0).getWriter().getParameter().getVal("column");
             //for object collect
             for(Map<String, String> column : columnList){

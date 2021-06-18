@@ -57,43 +57,67 @@ public class PerJobSubmitter {
      */
     public static String submit(Options options, JobGraph jobGraph) throws Exception{
         LOG.info("start to submit per-job task, LauncherOptions = {}", options.toString());
-        Properties conProp = MapUtil.jsonStrToObject(options.getConfProp(), Properties.class);
-        ClusterSpecification clusterSpecification = FlinkPerJobResourceUtil.createClusterSpecification(conProp);
-        PerJobClusterClientBuilder perJobClusterClientBuilder = new PerJobClusterClientBuilder();
-        Configuration config = StringUtils.isEmpty(options.getFlinkconf()) ? new Configuration() : GlobalConfiguration.loadConfiguration(options.getFlinkconf());
-        perJobClusterClientBuilder.init(options.getYarnconf(), config, conProp);
+        ClusterClient<ApplicationId> clusterClient = null;
+        String applicationId = null;
+        JobID jobId = null;
+        try{
+            Properties conProp = MapUtil.jsonStrToObject(options.getConfProp(), Properties.class);
+            ClusterSpecification clusterSpecification = FlinkPerJobResourceUtil.createClusterSpecification(conProp);
+            PerJobClusterClientBuilder perJobClusterClientBuilder = new PerJobClusterClientBuilder();
+            Configuration config = StringUtils.isEmpty(options.getFlinkconf()) ? new Configuration() : GlobalConfiguration.loadConfiguration(options.getFlinkconf());
+            perJobClusterClientBuilder.init(options.getYarnconf(), config, conProp);
 
-        AbstractYarnClusterDescriptor descriptor = perJobClusterClientBuilder.createPerJobClusterDescriptor(conProp, options, jobGraph);
-        ClusterClient<ApplicationId> clusterClient = descriptor.deployJobCluster(clusterSpecification, jobGraph, false);
-        String applicationId = clusterClient.getClusterId().toString();
-        Collection<JobStatusMessage> list = clusterClient.listJobs().get();
-        LOG.info("job size:" + list.size());
-        JobID jobId = list.iterator().next().getJobId();
-        LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, jobId.toString());
-        String finalStatus = null;
-        while (true) {
-            Collection<JobStatusMessage> list1 = clusterClient.listJobs().get();
-            JobStatus state = list1.iterator().next().getJobState();
-            LOG.info("job state: " + state);
-            if (state.isTerminalState()) {
-                finalStatus = state.name();
-                break;
+            AbstractYarnClusterDescriptor descriptor = perJobClusterClientBuilder.createPerJobClusterDescriptor(conProp, options, jobGraph);
+            clusterClient = descriptor.deployJobCluster(clusterSpecification, jobGraph, false);
+            applicationId = clusterClient.getClusterId().toString();
+            Collection<JobStatusMessage> list = clusterClient.listJobs().get();
+            LOG.info("job size:" + list.size());
+            jobId = list.iterator().next().getJobId();
+            LOG.info("deploy per_job with appId: {}, jobId: {}", applicationId, jobId.toString());
+            String finalStatus = null;
+            while (true) {
+                Collection<JobStatusMessage> list1 = clusterClient.listJobs().get();
+                JobStatus state = list1.iterator().next().getJobState();
+                LOG.info("job state: " + state);
+                if (state.isTerminalState()) {
+                    finalStatus = state.name();
+                    break;
+                }
+                Thread.sleep(10000);
             }
-            Thread.sleep(10000);
-        }
-        Map<String, OptionalFailure<Object>> map = clusterClient.getAccumulators(jobId);
-        for (Map.Entry<String, OptionalFailure<Object>> entry : map.entrySet()) {
-            LOG.info(entry.getKey() + ": " + entry.getValue().get());
+            Map<String, OptionalFailure<Object>> map = clusterClient.getAccumulators(jobId);
+            for (Map.Entry<String, OptionalFailure<Object>> entry : map.entrySet()) {
+                LOG.info(entry.getKey() + ": " + entry.getValue().get());
+            }
+
+            if ("FINISHED".equals(finalStatus)) {
+                LOG.info("TASK DONE");
+            }
+            if ("FAILED".equals(finalStatus)) {
+                LOG.info("TASK FAILED");
+            }
+
+            clusterClient.stop(jobId);
+            clusterClient.shutDownCluster();
+            clusterClient.shutdown();
+        }catch (Exception ex){
+            LOG.error("job running exception: ", ex);
+            if (clusterClient != null) {
+                try{
+                    if (jobId != null)
+                        clusterClient.stop(jobId);
+                }catch (Exception e) {
+                    LOG.error("stop job failed, please manual kill the app {}", applicationId);
+                }
+                try{
+                    clusterClient.shutDownCluster();
+                    clusterClient.shutdown();
+                }catch (Exception e) {
+                }
+            }
+            throw new RuntimeException(ex);
         }
 
-        if ("FINISHED".equals(finalStatus)) {
-            LOG.info("TASK DONE");
-        }
-        if ("FAILED".equals(finalStatus)) {
-            LOG.info("TASK FAILED");
-        }
-        clusterClient.shutDownCluster();
-        clusterClient.shutdown();
         return applicationId;
     }
 }
