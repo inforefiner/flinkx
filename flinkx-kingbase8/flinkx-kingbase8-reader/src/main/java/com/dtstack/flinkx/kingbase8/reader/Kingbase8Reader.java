@@ -21,12 +21,19 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
 import com.dtstack.flinkx.config.DataTransferConfig;
 import com.dtstack.flinkx.kingbase8.core.Kingbase8DatabaseMeta;
+import com.dtstack.flinkx.kingbase8.format.Kingbase8InputFormat;
 import com.dtstack.flinkx.rdb.datareader.JdbcDataReader;
+import com.dtstack.flinkx.rdb.inputformat.JdbcInputFormatBuilder;
 
 public class Kingbase8Reader extends JdbcDataReader {
 
     public Kingbase8Reader(DataTransferConfig config, StreamExecutionEnvironment env) {
         super(config, env);
         setDatabaseInterface(new Kingbase8DatabaseMeta());
+    }
+    
+    @Override
+    protected JdbcInputFormatBuilder getBuilder() {
+        return new JdbcInputFormatBuilder(new Kingbase8InputFormat());
     }
 }

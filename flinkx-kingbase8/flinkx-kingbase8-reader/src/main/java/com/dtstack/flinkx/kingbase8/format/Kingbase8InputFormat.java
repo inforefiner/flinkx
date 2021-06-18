@@ -29,8 +29,8 @@ public class Kingbase8InputFormat extends JdbcInputFormat {
 			"int2vector", "oidvector", // vector类型
 			"tsvector", "tsquery", // 文本搜索类型
 			"uuid", // UUID类型
-			"tid", "cid", "xid", "xid8", "varbit", "interval", "sys_lsn", "txid_snapshot"//
-	);
+			"tid", "cid", "xid", "xid8", "varbit", "interval", "sys_lsn", "txid_snapshot", //
+			"money");
 
 	@Override
 	public void openInternal(InputSplit inputSplit) throws IOException {
@@ -73,6 +73,8 @@ public class Kingbase8InputFormat extends JdbcInputFormat {
 						} else if ("tinyint".equalsIgnoreCase(columnType) || "bit".equalsIgnoreCase(columnType)) {
 							if (obj instanceof Boolean) {
 								obj = ((Boolean) obj ? 1 : 0);
+							} else {
+								obj = resultSet.getInt(pos + 1);
 							}
 						} else if ("timestamptz".equalsIgnoreCase(columnType)) {
 							Timestamp timestamp = resultSet.getTimestamp(pos + 1);

@@ -47,7 +47,8 @@ public class PostgresqlInputFormat extends JdbcInputFormat {
 			"int2vector", "oidvector", // vector类型
 			"tsvector", "tsquery", // 文本搜索类型
 			"uuid", // UUID类型
-			"tid", "cid", "xid", "xid8", "varbit", "interval", "sys_lsn", "txid_snapshot"//
+			"tid", "cid", "xid", "xid8", "varbit", "interval", "sys_lsn", "txid_snapshot",//
+			"money"
 	);
 
 	@Override
