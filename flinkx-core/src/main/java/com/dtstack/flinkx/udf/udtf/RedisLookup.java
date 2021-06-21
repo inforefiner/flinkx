@@ -101,8 +101,8 @@ public class RedisLookup extends TableFunction<Row> {
         }
     }
 
-    public void eval(String key) {
-        String rediesKey = RedisUtil.rediesKey(additionalKey, key);
+    public void eval(Object key) {
+        String rediesKey = RedisUtil.rediesKey(additionalKey, key.toString());
         Map<String, String> value = redisCommandsContainer.hgetAll(rediesKey);
         String[] fieldNames = rowTypeInfo.getFieldNames();
         for (int i = 0; i < fieldNames.length; i++) {
@@ -110,7 +110,7 @@ public class RedisLookup extends TableFunction<Row> {
             String valueStr;
             if (value != null && !value.isEmpty()) {
                 if (ArrayUtils.contains(keyIndexes, i)) {
-                    valueStr = key;
+                    valueStr = key.toString();
                 } else {
                     valueStr = value.get(fieldNames[i]);
                 }
@@ -132,8 +132,8 @@ public class RedisLookup extends TableFunction<Row> {
      * @param columnValueStr 需要设置的字段值,同样按:分割
      * @param ttl 过期时间(毫秒)
      */
-    public void eval(String key, String columnKeyStr, String columnValueStr, int ttl) {
-        String rediesKey = RedisUtil.rediesKey(additionalKey, key);
+    public void eval(Object key, String columnKeyStr, String columnValueStr, int ttl) {
+        String rediesKey = RedisUtil.rediesKey(additionalKey, key.toString());
         Map<String, String> value = redisCommandsContainer.hgetAll(rediesKey);
         String[] fieldNames = rowTypeInfo.getFieldNames();
         for (int i = 0; i < fieldNames.length; i++) {
@@ -141,7 +141,7 @@ public class RedisLookup extends TableFunction<Row> {
             String valueStr;
             if (value != null && !value.isEmpty()) {
                 if (ArrayUtils.contains(keyIndexes, i)) {
-                    valueStr = key;
+                    valueStr = key.toString();
                 } else {
                     valueStr = value.get(fieldNames[i]);
                 }

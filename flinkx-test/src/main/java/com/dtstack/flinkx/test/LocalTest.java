@@ -105,6 +105,7 @@ import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.CheckpointConfig;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.types.Row;
@@ -229,7 +230,9 @@ public class LocalTest {
         LOG.info("transform sql is:" + sql);
 
         //数据处理
-        DataStream<Row> dataStream1 = tableContext.toAppendStream(tableContext.sqlQuery(sql), Row.class);
+        Table table = tableContext.sqlQuery(sql);
+        table.printSchema();
+        DataStream<Row> dataStream1 = tableContext.toAppendStream(table, Row.class);
 
         //多writer构造
         List<WriterConfig> writerConfigs = firstContent.getWriter();
