@@ -53,6 +53,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -546,7 +547,7 @@ public class JdbcInputFormat extends BaseRichInputFormat {
                     jdbcInputSplit.setStartLocation(startLocation);
                     useMaxFunc = false;
                 }
-                String restoreFilter = buildIncrementFilter(restoreColumn.getType(),
+                String restoreFilter = buildRestoreFilter(restoreColumn.getType(),
                         restoreColumn.getName(),
                         jdbcInputSplit.getStartLocation(),
                         jdbcInputSplit.getEndLocation(),
@@ -630,6 +631,82 @@ public class JdbcInputFormat extends BaseRichInputFormat {
     }
 
     /**
+     * 构建增量任务查询sql的过滤条件
+     *
+     * @param restoreColType 增量字段类型
+     * @param restoreCol     增量字段名称
+     * @param startLocation    开始位置
+     * @param endLocation      结束位置
+     * @param customSql        用户自定义sql
+     * @param useMaxFunc       是否保存结束位置数据
+     * @return
+     */
+    protected String buildRestoreFilter(String restoreColType, String restoreCol, String startLocation, String endLocation, String customSql, boolean useMaxFunc) {
+        LOG.info("buildRestoreFilter, restoreColType = {}, restoreCol = {}, startLocation = {}, endLocation = {}, customSql = {}, useMaxFunc = {}", restoreColType, restoreCol, startLocation, endLocation, customSql, useMaxFunc);
+        StringBuilder filter = new StringBuilder(128);
+
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(customSql)) {
+            restoreCol = String.format("%s.%s", DbUtil.TEMPORARY_TABLE_NAME, databaseInterface.quoteColumn(restoreCol));
+        } else {
+            restoreCol = databaseInterface.quoteColumn(restoreCol);
+        }
+
+        //startLocation,endLocation如果是时间戳格式，转换成秒为单位的long值
+        String[] formatArray = {"yyyy-MM-dd HH:mm:ss.SSS", "yyyy-MM-dd HH:mm:ss", "yyyyMMddHHmmssSSS", "yyyyMMddHHmmss", "yyyyMMdd HH:mm:ss.SSS", "yyyyMMdd HH:mm:ss"};
+        if (ColumnType.isTimeType(restoreColType)) {
+            if (StringUtils.isNotEmpty(startLocation) && !DbUtil.NULL_STRING.equalsIgnoreCase(startLocation)) {
+                try{
+                    //Timestamp format must be yyyy-mm-dd hh:mm:ss[.fffffffff]
+                    startLocation = Timestamp.valueOf(startLocation).getTime()+"";
+                }catch (Exception e){
+                    for(String format : formatArray){
+                        try{
+                            java.util.Date date = new SimpleDateFormat(format).parse(startLocation);
+                            startLocation = date.getTime()+"";
+                            break;
+                        }catch (Exception ex){
+                        }
+                    }
+                }
+
+            }
+
+            if (StringUtils.isNotEmpty(endLocation) && !DbUtil.NULL_STRING.equalsIgnoreCase(endLocation)) {
+                try{
+                    //Timestamp format must be yyyy-mm-dd hh:mm:ss[.fffffffff]
+                    endLocation = Timestamp.valueOf(endLocation).getTime()+"";
+                } catch (Exception e) {
+                  for (String format : formatArray) {
+                    try {
+                      java.util.Date date = new SimpleDateFormat(format).parse(endLocation);
+                      endLocation = date.getTime() + "";
+                      break;
+                    } catch (Exception ex) {
+                    }
+                  }
+                }
+            }
+        }
+
+        String startFilter = buildStartLocationSql(restoreColType, restoreCol, startLocation, useMaxFunc);
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(startFilter)) {
+            filter.append(startFilter);
+        }
+
+        String endFilter = buildEndLocationSql(restoreColType, restoreCol, endLocation);
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(endFilter)) {
+            if (filter.length() > 0) {
+                filter.append(" and ").append(endFilter);
+            } else {
+                filter.append(endFilter);
+            }
+        }
+
+        return filter.toString();
+    }
+
+
+    /**
      * 构建起始位置sql
      *
      * @param incrementColType 增量字段类型
@@ -662,7 +739,7 @@ public class JdbcInputFormat extends BaseRichInputFormat {
      * @return
      */
     public String buildEndLocationSql(String incrementColType, String incrementCol, String endLocation) {
-        if (org.apache.commons.lang.StringUtils.isEmpty(endLocation) || DbUtil.NULL_STRING.equalsIgnoreCase(endLocation)) {
+        if (StringUtils.isEmpty(endLocation) || DbUtil.NULL_STRING.equalsIgnoreCase(endLocation)) {
             return null;
         }
 
@@ -896,4 +973,6 @@ public class JdbcInputFormat extends BaseRichInputFormat {
                                         String table, List<MetaColumn> metaColumns) {
         return DbUtil.analyzeTable(dbUrl, username, password, databaseInterface, table, metaColumns);
     }
+
+
 }
