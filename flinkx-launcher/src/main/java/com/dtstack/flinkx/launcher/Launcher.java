@@ -159,6 +159,10 @@ public class Launcher {
                 if (StringUtils.isBlank(libJar)){
                     throw new IllegalArgumentException("per-job mode must have flink lib path!");
                 }
+                //返回Launcher进程的pid
+                String name = ManagementFactory.getRuntimeMXBean().getName();
+                String pid = name.split("@")[0];
+                LOG.info("#PID={}#", pid);
 
                 argList.add("-monitor");
                 argList.add("application_default");
