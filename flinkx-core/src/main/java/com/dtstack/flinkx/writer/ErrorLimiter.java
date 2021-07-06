@@ -61,6 +61,9 @@ ErrorLimiter {
         String errorDataStr = "";
         if(errorData != null){
             errorDataStr = errorData.toString() + "\n";
+            if(errorDataStr.length() > 1000){
+                errorDataStr = errorDataStr.substring(0,1000)+ "\n";
+            }
         }
 
         long errors = accumulatorCollector.getAccumulatorValue(Metrics.NUM_ERRORS);

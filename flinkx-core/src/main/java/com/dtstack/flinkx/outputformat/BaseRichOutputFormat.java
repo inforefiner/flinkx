@@ -331,9 +331,13 @@ public abstract class BaseRichOutputFormat extends org.apache.flink.api.common.i
 
     }
 
-    protected void writeSingleRecord(Row row) {
-        if(errorLimiter != null) {
-            errorLimiter.acquire();
+    protected void writeSingleRecord(Row row) throws IOException {
+        try{
+            if(errorLimiter != null) {
+                errorLimiter.acquire();
+            }
+        }catch (Exception e){
+            throw new IOException(e);
         }
 
         try {
@@ -425,14 +429,16 @@ public abstract class BaseRichOutputFormat extends org.apache.flink.api.common.i
         throw new UnsupportedOperationException(writerName + "不支持批量写入");
     }
 
-    protected void writeRecordInternal() {
+    protected void writeRecordInternal() throws IOException {
         try {
             writeMultipleRecords();
         } catch(Exception e) {
             if(restoreConfig.isRestore()){
-                throw new RuntimeException(e);
+                throw new IOException(e);
             } else {
-                rows.forEach(this::writeSingleRecord);
+                for(Row row : rows){
+                    writeSingleRecord(row);
+                }
             }
         }
         rows.clear();

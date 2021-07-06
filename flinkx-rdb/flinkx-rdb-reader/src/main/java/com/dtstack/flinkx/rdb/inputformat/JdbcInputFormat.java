@@ -545,7 +545,7 @@ public class JdbcInputFormat extends BaseRichInputFormat {
                 if (StringUtils.isNotBlank(startLocation)) {
                     LOG.info("update startLocation, before = {}, after = {}", jdbcInputSplit.getStartLocation(), startLocation);
                     jdbcInputSplit.setStartLocation(startLocation);
-                    useMaxFunc = false;
+//                    useMaxFunc = false;
                 }
                 String restoreFilter = buildRestoreFilter(restoreColumn.getType(),
                         restoreColumn.getName(),

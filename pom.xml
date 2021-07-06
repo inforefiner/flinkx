@@ -36,9 +36,9 @@
         <!--<module>flinkx-hive</module>
         <module>flinkx-es</module>
         <module>flinkx-ftp</module>
-        <module>flinkx-odps</module>
+        <module>flinkx-odps</module>-->
         <module>flinkx-hbase</module>
-        <module>flinkx-phoenix</module>
+        <!--<module>flinkx-phoenix</module>
         <module>flinkx-carbondata</module>
         <module>flinkx-kudu</module>
         <module>flinkx-cassandra</module>
@@ -232,5 +232,20 @@
             </plugin>
         </plugins>
     </reporting>
+
+    <repositories>
+        <repository>
+            <id>inforefiner</id>
+            <url>http://192.168.1.171:8081/nexus/content/groups/public/</url>
+            <releases>
+                <updatePolicy>always</updatePolicy><!-- never,always,interval n -->
+                <enabled>true</enabled>
+                <checksumPolicy>warn</checksumPolicy><!-- fail,ignore -->
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
 </project>

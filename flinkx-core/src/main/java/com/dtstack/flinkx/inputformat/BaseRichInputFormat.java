@@ -267,9 +267,10 @@ public abstract class BaseRichInputFormat extends org.apache.flink.api.common.io
             if(formatState == null){
                 formatState = new FormatState(indexOfSubTask, null);
             } else {
-                numReadCounter.add(formatState.getMetricValue(Metrics.NUM_READS));
-                bytesReadCounter.add(formatState.getMetricValue(Metrics.READ_BYTES));
-                durationCounter.add(formatState.getMetricValue(Metrics.READ_DURATION));
+                //原逻辑是将formatstate的metric信息加载过来，但是这里加载后再统计read num,最终结果会与本地实际读取的条数不一致
+//                numReadCounter.add(formatState.getMetricValue(Metrics.NUM_READS));
+//                bytesReadCounter.add(formatState.getMetricValue(Metrics.READ_BYTES));
+//                durationCounter.add(formatState.getMetricValue(Metrics.READ_DURATION));
             }
         }
     }
