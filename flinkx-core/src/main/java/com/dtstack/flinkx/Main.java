@@ -209,12 +209,17 @@ public class Main {
 
         addEnvClassPath(env, ClassLoaderManager.getClassPath());
 
-        JobExecutionResult result = env.execute(jobIdString);
-        result.getAllAccumulatorResults().forEach((name, val) -> LOG.info(name + ": " + val));
-
-        LOG.info("TASK DONE");
-        if (env instanceof MyLocalStreamEnvironment) {
-            ResultPrintUtil.printResult(result);
+        try{
+            JobExecutionResult result = env.execute(jobIdString);
+            result.getAllAccumulatorResults().forEach((name, val) -> LOG.info(name + ": " + val));
+            LOG.info("TASK DONE");
+            if (env instanceof MyLocalStreamEnvironment) {
+                ResultPrintUtil.printResult(result);
+            }
+        }catch (Exception e){
+            LOG.info("TASK FAILED");
+            LOG.error("job execute exception: ",e);
+            throw e;
         }
     }
 

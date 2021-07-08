@@ -127,7 +127,12 @@ public class Launcher {
             String pid = name.split("@")[0];
             LOG.info("#PID={}#", pid);
             String[] localArgs = argList.toArray(new String[0]);
-            com.dtstack.flinkx.Main.main(localArgs);
+            try{
+                com.dtstack.flinkx.Main.main(localArgs);
+            }catch (Exception e){
+                LOG.error("Launcher exit because of job execute exception");
+                System.exit(-1);
+            }
         } else {
             String pluginRoot = launcherOptions.getPluginRoot();
             String content = launcherOptions.getJob();
